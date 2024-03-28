@@ -5,8 +5,11 @@ if strcmp(os,'MACI64')
     Projdir = '/Users/bs3667/Dropbox (NYU Langone Health)/Bo Shen Working files/STDP_Project';
     Gitdir = '~/STDP';
 elseif strcmp(os,'GLNXA64')
-    Projdir = '/gpfs/data/glimcherlab/BoShen/Noise';
-    Gitdir = '/gpfs/data/glimcherlab/BoShen/Noise';
+    Projdir = '/gpfs/data/glimcherlab/BoShen/STDP_Project';
+    Gitdir = '/gpfs/data/glimcherlab/BoShen/STDP';
+elseif strcmp(os, 'PCWIN64')
+    Projdir = 'C:\Users\Bo\Dropbox (NYU Langone Health)\Bo Shen Working files\STDP_Project';
+    Gitdir = 'C:\Users\Bo\Documents\GitHub\STDP';
 end
 gnrloutdir = Projdir;
 Svmat_dir = fullfile(Gitdir, 'Simulations');
@@ -43,6 +46,7 @@ xE = randn(Ntwk.Input.N,1)*Ntwk.Input.Tube;
 [xE, I] = sort(xE);
 yE = rand(Ntwk.Input.N,1)*100 - 50; % zeros(Ntwk.Exct.N,1); % assume all neurons approximately on the same layer
 Ntwk.Input.Location = [xE, yE];
+clear xE yE;
 % connections to the local excitatory neurons
 
 [XInput, XE] = meshgrid(Ntwk.Input.Location(:,1), Ntwk.Exct.Location(:,1)); % rows represent local and columns represent Input projection
@@ -50,6 +54,7 @@ Ntwk.Input.Location = [xE, yE];
 DstcInput = sqrt((XInput - XE).^2 + (YInput - YE).^2); % Euclidean distance between each pair of neurons
 p_Input = exp(-.5*(DstcInput/Ntwk.Input.AxonRange).^2); % probability of physical connection based on distance
 Ntwk.Cnnct_Input = p_Input >= rand(size(p_Input)); % projections from input, 0 or 1 
+clear XInput YInput XE YE DstcInput p_Input;
 if show
     h = figure;
     filename = 'InputTuning';

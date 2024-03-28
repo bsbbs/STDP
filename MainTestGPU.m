@@ -5,8 +5,11 @@ if strcmp(os,'MACI64')
     Projdir = '/Users/bs3667/Dropbox (NYU Langone Health)/Bo Shen Working files/STDP_Project';
     Gitdir = '~/STDP';
 elseif strcmp(os,'GLNXA64')
-    Projdir = '/gpfs/data/glimcherlab/BoShen/Noise';
-    Gitdir = '/gpfs/data/glimcherlab/BoShen/Noise';
+    Projdir = '/gpfs/data/glimcherlab/BoShen/STDP_Project';
+    Gitdir = '/gpfs/data/glimcherlab/BoShen/STDP';
+elseif strcmp(os, 'PCWIN64')
+    Projdir = 'C:\Users\Bo\Dropbox (NYU Langone Health)\Bo Shen Working files\STDP_Project';
+    Gitdir = 'C:\Users\Bo\Documents\GitHub\STDP';
 end
 gnrloutdir = Projdir;
 Svmat_dir = fullfile(Gitdir, 'Simulations');
@@ -48,9 +51,10 @@ Ntwk.Input.AxonRange = 150; % um, the assumed standard deviation of axon physica
 % assume the long-range projection target the center field of the tested patch
 rng(2024);
 xE = gpuArray.randn(Ntwk.Input.N,1)*Ntwk.Input.Tube;
-[xE, I] = sort(xE);
+[xE, ~] = sort(xE);
 yE = gpuArray.rand(Ntwk.Input.N,1)*100 - 50; % zeros(Ntwk.Exct.N,1); % assume all neurons approximately on the same layer
 Ntwk.Input.Location = [xE, yE];
+clear xE yE;
 % connections to the local excitatory neurons
 
 [XInput, XE] = meshgrid(Ntwk.Input.Location(:,1), Ntwk.Exct.Location(:,1)); % rows represent local and columns represent Input projection
@@ -58,6 +62,7 @@ Ntwk.Input.Location = [xE, yE];
 DstcInput = sqrt((XInput - XE).^2 + (YInput - YE).^2); % Euclidean distance between each pair of neurons
 p_Input = exp(-.5*(DstcInput/Ntwk.Input.AxonRange).^2); % probability of physical connection based on distance
 Ntwk.Cnnct_Input = p_Input >= rand(size(p_Input)); % projections from input, 0 or 1 
+clear XInput YInput XE YE DstcInput p_Input;
 if show
     h = figure;
     filename = 'InputTuning';
@@ -133,7 +138,7 @@ ylabel('Neuron');
 title('Spike train');
 axis([0 duration 0.5 Ntwk.Input.N+0.5]); % Adjust the axis for better visualization
 mysavefig(h, "Dummy Input", plotdir, 12, [3,6], 1);
-
+clear spikeTimes spikeIndices Seq SumStrength;
 %% Simulating the neural network
 % Initializing the network status at t=0
 % - membrane potentials
@@ -178,7 +183,7 @@ Exmpl.xIpre = [xIpre(1,exampleI); zeros(timesteps-1, 1)];
 Exmpl.xIpost = [xIpost(exampleI,1); zeros(timesteps-1, 1)];
 
 % Other parameters
-Ib = 200; % Vogels et al., 2011; 129; % pA, baseline input to every excitatory neurons
+Ib = 150; % Vogels et al., 2011; 129; % pA, baseline input to every excitatory neurons
 ExctNoise = Ib + gpuArray.randn(Ntwk.Exct.N,1)*Ntwk.Noise.sgm; % OU noise on excitatory neurons
 InhbtNosie = Ib + gpuArray.randn(Ntwk.Inhbt.N,1)*Ntwk.Noise.sgm; % OU noise on inhibitory neurons
 Exmpl.ExctNoise = [ExctNoise(exampleE,1); zeros(timesteps-1, 1)]; % ExctNoise(exampleE,1)
@@ -251,6 +256,12 @@ for t = 1:(timesteps-1)
     Exmpl.Ispikes(t+1) = Ispikes(exampleI);
     InhbtRefraction(Ispikes) = refractionPeriod.I;
     plot(time(t)*ones(sum(Ispikes),1), InhbtVec(Ispikes), 'r.', 'MarkerSize', 2);
+    if mod(t, 10) == 0
+        fprintf('.');
+        if mod(t,100)==0
+            fprintf('%1.4f s\n', t*dt/1000);
+        end
+    end
 end
 axis([1700 2310 0 Ntwk.Exct.N]);
 xlabel('Time (ms)');
@@ -258,7 +269,7 @@ ylabel('Neurons');
 title('Raster plot of Exct/Inhbt neurons');
 mysavefig(h, filename, plotdir, 12, [8, 6], 1);
 
-%% visualizing example neurons
+% visualizing example neurons
 h = figure;
 filename = 'Example neurons activity';
 subplot(2,1,1); hold on;
@@ -325,7 +336,7 @@ xlabel('Time (ms)');
 ylabel('Plastic weight');
 mysavefig(h, filename, plotdir, 12, [5,8], 1);
 
-%% visualize weight change
+% visualize weight change
 h = figure;
 filename = 'WEI_change_5s';
 imagesc(WEI - Ntwk.wEI_initial)

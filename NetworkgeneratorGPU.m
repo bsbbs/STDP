@@ -1,4 +1,4 @@
-Ntwkfile = fullfile(gnrloutdir, 'Ntkw.mat');
+Ntwkfile = fullfile(gnrloutdir, 'NtkwGPU.mat');
 if ~exist(Ntwkfile, 'file')
     %% The structure of the network
     Ntwk.Scale = 1000; % um, scale of the micro structure to test, assumed as one dimentional 
@@ -58,15 +58,17 @@ if ~exist(Ntwkfile, 'file')
     % locations of excitatory cells
     rng(2024);
     xE = -Ntwk.Scale/2 + gpuArray.rand(Ntwk.Exct.N,1)*Ntwk.Scale;
-    [xE, I] = sort(xE);
+    [xE, ~] = sort(xE);
     yE = gpuArray.rand(Ntwk.Exct.N,1)*100 - 50; % zeros(Ntwk.Exct.N,1); % assume all neurons approximately on the same layer
     Ntwk.Exct.Location = [xE, yE];
+    clear xE yE;
     % locations of Inhibitory cells
     rng(2023);
     xI = -Ntwk.Scale/2 + gpuArray.rand(Ntwk.Inhbt.N,1)*Ntwk.Scale;
-    [xI, Ip] = sort(xI);
+    [xI, ~] = sort(xI);
     yI = gpuArray.rand(Ntwk.Inhbt.N,1)*80  - 40;
     Ntwk.Inhbt.Location = [xI, yI];
+    clear xI yI;
     if show
         h = figure;
         filename = 'Network structure';
@@ -85,18 +87,21 @@ if ~exist(Ntwkfile, 'file')
     DstcEI = sqrt((XE - XI).^2 + (YE - YI).^2); % Euclidean distance between each pair of Exct and Inhbt neurons
     p_EI = exp(-.5*(DstcEI/Ntwk.Exct.AxonRange).^2); %1 - (1 - exp(-DstcEI/Ntwk.Exct.AxonRange)).^4; % probability of physical connection from E to I based on distance
     Ntwk.Cnnct_EI = p_EI >= rand(size(p_EI)); % connections from E to I, 0 or 1
+    clear XE XI YE YI DstcEI p_EI;
     % possible synaptic connection from I -> E
     [XI, XE] = meshgrid(Ntwk.Inhbt.Location(:,1), Ntwk.Exct.Location(:,1)); % rows represent Exct and columns represent Inhbt
     [YI, YE] = meshgrid(Ntwk.Inhbt.Location(:,2), Ntwk.Exct.Location(:,2));
     DstcIE = sqrt((XI - XE).^2 + (YI - YE).^2); % Euclidean distance between each pair of Inhbt and Exct neurons
     p_IE = exp(-.5*(DstcIE/Ntwk.Inhbt.AxonRange).^2); % probability of connection from I to E based on distance
     Ntwk.Cnnct_IE = p_IE >= rand(size(p_IE)); % connections from I to E, 0 or 1
+    clear XE XI YE YI DstcIE p_IE;
     % possible synaptic connection from E -> E
     [XE1, XE2] = meshgrid(Ntwk.Exct.Location(:,1), Ntwk.Exct.Location(:,1));
     [YE1, YE2] = meshgrid(Ntwk.Exct.Location(:,2), Ntwk.Exct.Location(:,2));
     DstcEE = sqrt((XE1 - XE2).^2 + (YE1 - YE2).^2); %  Euclidean distance between each pair of Exct neurons
     p_EE = exp(-.5*(DstcEE/Ntwk.Exct.AxonRange).^2); % probability of connection from E to E based on distance
     Ntwk.Cnnct_EE = p_EE >= rand(size(p_EE)); % connections from E to E, 0 or 1
+    clear XE1 XE2 YE1 YE2 DstcEE p_EE;
     % possible synaptic connection from I -> I was not assumed since we do
     % not assume disinhibition in the current interneuronal type (PV like neurons)
     if show
@@ -118,6 +123,7 @@ if ~exist(Ntwkfile, 'file')
         % plot(Ntwk.Inhbt.Location(IEs,1), Ntwk.Inhbt.Location(IEs,2), '.', 'Color', OKeeffe(7,:), 'MarkerSize', Ntwk.Inhbt.Properties.size);
         legend([lgd1, lgd2], {'E to I','I to E'});
         mysavefig(h, filename, gnrloutdir, 14, [5, 2.5], 2);
+        clear EIs IEs i;
     end
     %% Synaptic weights for those possible connections defined above
     % initial weights
