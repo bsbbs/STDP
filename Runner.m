@@ -183,7 +183,7 @@ xlabel('x (\mum)', 'Color', 'w');
 ylabel('y (\mum)', 'Color', 'w');
 xlim([-Ntwk.Scale, Ntwk.Scale]);
 ylim([-Ntwk.Scale/2, Ntwk.Scale/2]);
-for t = 20000:(timesteps-1)
+for t = 1:(timesteps-1)
     % input spikes
     InputSpikes = gpuArray.rand(Ntwk.Input.N,1);
     InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < spikeProbability*Seq(1,t);
@@ -279,6 +279,7 @@ for t = 20000:(timesteps-1)
         end
     end
 end
+fprintf('Successfully completed\n');
 % Close the video file
 close(writerObj);
 h = figure(99); subplot(1,2,1);
