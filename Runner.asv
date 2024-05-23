@@ -165,18 +165,17 @@ InhbtNosie = Ib + gpuArray.randn(Ntwk.Inhbt.N,1)*Ntwk.Noise.sgm; % OU noise on i
 Exmpl.ExctNoise = [ExctNoise(exampleE,1), zeros(numel(exampleE), timesteps-1)]; % ExctNoise(exampleE,1)
 % simulation start...
 filename = 'RealtimeMonitor';
-moviename = 'RealtimeMonitor.mpg4'; % Name of the video file
+moviename = 'RealtimeMonitor.avi'; % Name of the video file
 % Prepare the video file
-writerObj = VideoWriter(fullfile(plotdir, moviename));
+writerObj = VideoWriter(fullfile(plotdir,moviename));
 writerObj.FrameRate = 100; % Adjust frame rate as needed
-writerObj.Quality = 100;   % Set quality to maximum for best results (only for MPEG-4)
 open(writerObj);
 ExctVec = 1:Ntwk.Exct.N;
 InhbtVec = [1:Ntwk.Inhbt.N]*4;
-h1 = figure;
-h2 = figure('Position', [1, 1, 1920, 960]);hold on;
+h = figure(98,'Position', [1, 1, 1920, 960]); hold on;
+H 
 pbaspect([2 1 1]);
-h2.Color = 'k'; % Sets the figure background to black
+h.Color = 'k'; % Sets the figure background to black
 ax = gca;
 ax.Color = 'k';
 ax.XColor = 'w';
@@ -252,7 +251,7 @@ for t = 1:(timesteps-1)
     Exmpl.Ispikes(:,t+1) = Ispikes(exampleI);
     InhbtRefraction(Ispikes) = refractionPeriod.I;
     % visualization
-    figure(h2);
+    h = figure(98);
     plot(Ntwk.Exct.Location(Espikes,1), Ntwk.Exct.Location(Espikes,2),'w.', 'MarkerSize', 2);
     plot(Ntwk.Inhbt.Location(Ispikes,1), Ntwk.Inhbt.Location(Ispikes,2),'r.', 'MarkerSize', 2);
     if mod(t, 10000/100) == 1
@@ -263,13 +262,13 @@ for t = 1:(timesteps-1)
         cla;
     end
     if t <= 5000/dt
-        figure(h1);
+        h = figure(99);
         subplot(1,2,1); hold on;
         plot(time(t)*ones(sum(Espikes),1), ExctVec(Espikes), 'k.', 'MarkerSize', 2);
         plot(time(t)*ones(sum(Ispikes),1), InhbtVec(Ispikes), 'r.', 'MarkerSize', 2);
     end
     if t >= timesteps-1 - 5000/dt
-        figure(h1);
+        h = figure(99);
         subplot(1,2,2); hold on;
         plot(time(t)*ones(sum(Espikes),1), ExctVec(Espikes), 'k.', 'MarkerSize', 2);
         plot(time(t)*ones(sum(Ispikes),1), InhbtVec(Ispikes), 'r.', 'MarkerSize', 2);
@@ -284,7 +283,7 @@ end
 fprintf('Successfully completed\n');
 % Close the video file
 close(writerObj);
-figure(h1); subplot(1,2,1);
+h = figure(99); subplot(1,2,1);
 axis([leftt rightt 0 Ntwk.Exct.N]);
 % axis([43575, 44175, 0 Ntwk.Exct.N]);
 xlabel('Time (ms)');
