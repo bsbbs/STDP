@@ -78,12 +78,15 @@ spikeRate = 100/1000; % spikes per milisecond
 spikeProbability = spikeRate * dt;
 
 % Poisson generator: generate random numbers and compare to spike probability
-InputSpikes = gpuArray.rand(Ntwk.Input.N, timesteps);
+leftt = floor(min(find(Seq(1,:)>0, 1 ), find(Seq(2,:)>0, 1 )*dt)/100)*100;
+rightt = ceil((max(find(Seq(1,:)>0, 1 ), find(Seq(2,:)>0, 1 ))*dt+500)/100)*100;
+tmpsteps = (rightt - leftt)/dt;
+InputSpikes = gpuArray.rand(Ntwk.Input.N, tmpsteps);
 trunck = 50000;
-for i = 1:ceil(timesteps/trunck)
-    timevec = 1+(i-1)*trunck:min(i*trunck, timesteps);
-    InputSpikes(Ntwk.Input.Origins == 1, timevec) = InputSpikes(Ntwk.Input.Origins == 1, timevec) < spikeProbability*Seq(1, timevec);
-    InputSpikes(Ntwk.Input.Origins == 2, timevec) = InputSpikes(Ntwk.Input.Origins == 2, timevec) < spikeProbability*Seq(2, timevec);
+for i = 1:ceil(tmpsteps/trunck)
+    timevec = 1+(i-1)*trunck:min(i*trunck, tmpsteps);
+    InputSpikes(Ntwk.Input.Origins == 1, timevec) = InputSpikes(Ntwk.Input.Origins == 1, timevec) < spikeProbability*Seq(1, timevec + leftt/dt);
+    InputSpikes(Ntwk.Input.Origins == 2, timevec) = InputSpikes(Ntwk.Input.Origins == 2, timevec) < spikeProbability*Seq(2, timevec + leftt/dt);
 end
 
 % Plot the raster plot
@@ -93,7 +96,7 @@ for n = 1:5:Ntwk.Input.N
     % Find indices where spikes occur
     spikeIndices = find(InputSpikes(n, :));
     % Convert indices to time
-    spikeTimes = time(spikeIndices);
+    spikeTimes = time(spikeIndices+leftt/dt);
     % Plot spikes for this neuron
     if Ntwk.Input.Origins(n) == 1
         plot(spikeTimes, n * ones(size(spikeTimes)), '.', "Color", OKeeffe(1,:), 'MarkerSize', 2);
@@ -105,8 +108,6 @@ hold off;
 xlabel('Time (ms)');
 ylabel('Input neurons');
 title('Spike train');
-leftt = floor(min(find(Seq(1,:)>0, 1 ), find(Seq(2,:)>0, 1 ))/1000)*100;
-rightt = ceil((max(find(Seq(1,:)>0, 1 ), find(Seq(2,:)>0, 1 ))+5000)/1000)*100;
 axis([leftt rightt 0.5 Ntwk.Input.N+0.5]); % Adjust the axis for better visualization
 mysavefig(h, "Dummy Input", plotdir, 12, [3,6], 1);
 clear InputSpikes spikeTimes spikeIndices SumStrength;
@@ -139,33 +140,33 @@ xIpost = gpuArray.zeros(Ntwk.Inhbt.N,1);
 % Dynamic variables of the example neurons
 exampleE = Ntwk.Smpl.E; % E1, E2, EShare1, EShare2
 exampleI = Ntwk.Smpl.I; % I1, I2, IShare
-Exmpl.ExctV = [ExctV(exampleE,1), zeros(numel(exampleE), timesteps-1)];
-Exmpl.InhbtV = [InhbtV(exampleI,1), zeros(numel(exampleI), timesteps-1)];
-Exmpl.ExctgE = [ExctgE(exampleE,1), zeros(numel(exampleE), timesteps-1)];
-Exmpl.ExctgI = [ExctgI(exampleE,1), zeros(numel(exampleE), timesteps-1)];
-Exmpl.InhbtgE = [InhbtgE(exampleI,1), zeros(numel(exampleI), timesteps-1)];
-Exmpl.InhbtgI = [InhbtgI(exampleI,1), zeros(numel(exampleI), timesteps-1)];
-Exmpl.WEI = gpuArray.zeros(numel(exampleI), numel(exampleE), timesteps);
-Exmpl.WEI(:,:,1) = WEI(exampleI,exampleE);
-Exmpl.WIE = gpuArray.zeros(numel(exampleE), numel(exampleI), timesteps);
-Exmpl.WIE(:,:,1) = WIE(exampleE,exampleI);
-Exmpl.WEE = gpuArray.zeros(numel(exampleE), numel(exampleE), timesteps);
-Exmpl.WEE(:,:,1) = WEE(exampleE,exampleE);
-Exmpl.Espikes = [Espikes(exampleE,1), zeros(numel(exampleE), timesteps-1)];
-Exmpl.Ispikes = [Ispikes(exampleI,1), zeros(numel(exampleI), timesteps-1)];
-Exmpl.xEpre = [xEpre(1,exampleE)', zeros(numel(exampleE), timesteps-1)];
-Exmpl.xEpost = [xEpost(exampleE,1), zeros(numel(exampleE), timesteps-1)];
-Exmpl.xIpre = [xIpre(1,exampleI)', zeros(numel(exampleI), timesteps-1)];
-Exmpl.xIpost = [xIpost(exampleI,1), zeros(numel(exampleI), timesteps-1)];
+Exmpl.ExctV = [ExctV(exampleE,1)'; zeros(timesteps-1, numel(exampleE))];
+Exmpl.InhbtV = [InhbtV(exampleI,1)'; zeros(timesteps-1, numel(exampleI))];
+Exmpl.ExctgE = [ExctgE(exampleE,1)'; zeros(timesteps-1, numel(exampleE))];
+Exmpl.ExctgI = [ExctgI(exampleE,1)'; zeros(timesteps-1, numel(exampleE))];
+Exmpl.InhbtgE = [InhbtgE(exampleI,1)'; zeros(timesteps-1, numel(exampleI))];
+Exmpl.InhbtgI = [InhbtgI(exampleI,1)'; zeros(timesteps-1, numel(exampleI))];
+Exmpl.WEI = gpuArray.zeros(timesteps, numel(exampleI), numel(exampleE));
+Exmpl.WEI(1,:,:) = WEI(exampleI,exampleE);
+Exmpl.WIE = gpuArray.zeros(timesteps, numel(exampleE), numel(exampleI));
+Exmpl.WIE(1,:,:) = WIE(exampleE,exampleI);
+Exmpl.WEE = gpuArray.zeros(timesteps, numel(exampleE), numel(exampleE));
+Exmpl.WEE(1,:,:) = WEE(exampleE,exampleE);
+Exmpl.Espikes = [Espikes(exampleE,1)'; zeros(timesteps-1, numel(exampleE))];
+Exmpl.Ispikes = [Ispikes(exampleI,1)'; zeros(timesteps-1, numel(exampleI))];
+Exmpl.xEpre = [xEpre(1,exampleE); zeros(timesteps-1, numel(exampleE))];
+Exmpl.xEpost = [xEpost(exampleE,1)'; zeros(timesteps-1, numel(exampleE))];
+Exmpl.xIpre = [xIpre(1,exampleI); zeros(timesteps-1, numel(exampleI))];
+Exmpl.xIpost = [xIpost(exampleI,1)'; zeros(timesteps-1, numel(exampleI))];
 
 % Other parameters
 Ib = 150; % Vogels et al., 2011; 129; % pA, baseline input to every excitatory neurons
 ExctNoise = Ib + gpuArray.randn(Ntwk.Exct.N,1)*Ntwk.Noise.sgm; % OU noise on excitatory neurons
 InhbtNosie = Ib + gpuArray.randn(Ntwk.Inhbt.N,1)*Ntwk.Noise.sgm; % OU noise on inhibitory neurons
-Exmpl.ExctNoise = [ExctNoise(exampleE,1), zeros(numel(exampleE), timesteps-1)]; % ExctNoise(exampleE,1)
+Exmpl.ExctNoise = [ExctNoise(exampleE,1)'; zeros(timesteps-1, numel(exampleE))]; % ExctNoise(exampleE,1)
 % simulation start...
 filename = 'RealtimeMonitor';
-moviename = 'RealtimeMonitor.mpg4'; % Name of the video file
+moviename = 'RealtimeMonitor'; % Name of the video file
 % Prepare the video file
 writerObj = VideoWriter(fullfile(plotdir, moviename));
 writerObj.FrameRate = 100; % Adjust frame rate as needed
@@ -192,70 +193,68 @@ for t = 1:(timesteps-1)
     InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < spikeProbability*Seq(2,t);
     % Synaptic plasticity
     xEpre = xEpre -(xEpre/Ntwk.ExctSTDP.tau_prepost)*dt + Espikes';
-    Exmpl.xEpre(:,t+1) = xEpre(exampleE);
+    Exmpl.xEpre(t+1,:) = xEpre(exampleE);
     xEpost = xEpost -(xEpost/Ntwk.ExctSTDP.tau_postpre)*dt + Espikes;
-    Exmpl.xEpost(:,t+1) = xEpost(exampleE);
+    Exmpl.xEpost(t+1,:) = xEpost(exampleE)';
     xIpre = xIpre -(xIpre/Ntwk.InhbtSTDP.tau_prepost)*dt + Ispikes';
-    Exmpl.xIpre(:,t+1) = xIpre(exampleI);
+    Exmpl.xIpre(t+1,:) = xIpre(exampleI);
     xIpost = xIpost -(xIpost/Ntwk.InhbtSTDP.tau_postpre)*dt + Ispikes;
-    Exmpl.xIpost(:,t+1) = xIpost(exampleI);
+    Exmpl.xIpost(t+1,:) = xIpost(exampleI)';
     WEI = WEI + Ntwk.ExctSTDP.eta*(Ntwk.ExctSTDP.sign_postpre*xIpost*Espikes' + Ntwk.ExctSTDP.intercept_pre*ones(size(Ispikes))*Espikes' ... % post -> pre
         + Ntwk.ExctSTDP.sign_prepost*Ispikes*xEpre + Ntwk.ExctSTDP.intercept_post*Ispikes*ones(size(Espikes'))); % pre -> post
-    Exmpl.WEI(:,:,t+1) = WEI(exampleI, exampleE);
+    Exmpl.WEI(t+1,:,:) = WEI(exampleI, exampleE);
     WIE = WIE + Ntwk.InhbtSTDP.eta*(Ntwk.InhbtSTDP.sign_postpre*xEpost*Ispikes' + Ntwk.InhbtSTDP.intercept_pre*ones(size(Espikes))*Ispikes' ... % post -> pre
         + Ntwk.InhbtSTDP.sign_prepost*Espikes*xIpre + Ntwk.InhbtSTDP.intercept_post*Espikes*ones(size(Ispikes'))); % pre -> post
-    Exmpl.WIE(:,:,t+1) = WIE(exampleE, exampleI);
+    Exmpl.WIE(t+1,:,:) = WIE(exampleE, exampleI);
     WEE = WEE + Ntwk.ExctSTDP.eta*(Ntwk.ExctSTDP.sign_postpre*xEpost*Espikes' + Ntwk.ExctSTDP.intercept_pre*ones(size(Espikes))*Espikes' ... % post -> pre
         + Ntwk.ExctSTDP.sign_prepost*Espikes*xEpre + Ntwk.ExctSTDP.intercept_post*Espikes*ones(size(Espikes'))); % pre -> post
-    Exmpl.WEE(:,:,t+1) = WEE(exampleE+1, exampleE);
+    Exmpl.WEE(t+1,:,:) = WEE(exampleE, exampleE);
 
     % Synaptic activities
     ExctgE = ExctgE - ExctgE/Ntwk.Synapse.tauExct*dt ... % excitatory synaptic conductance on Exct neurons
         + Ntwk.Synapse.gbarE*(Ntwk.Cnnct_Input*InputSpikes + Ntwk.Cnnct_EE.*WEE*Espikes);
-    Exmpl.ExctgE(:,t+1) = ExctgE(exampleE);
+    Exmpl.ExctgE(t+1,:) = ExctgE(exampleE)';
     ExctgI = ExctgI - ExctgI/Ntwk.Synapse.tauInhbt*dt ... % inhibitory synaptic conductance on Exct neurons
         + Ntwk.Synapse.gbarI*(Ntwk.Cnnct_IE.*WIE*Ispikes);
-    Exmpl.ExctgI(:,t+1) = ExctgI(exampleE);
+    Exmpl.ExctgI(t+1,:) = ExctgI(exampleE)';
     InhbtgE = InhbtgE - InhbtgE/Ntwk.Synapse.tauExct*dt ... % excitatory synaptic conductance on Inhbt neurons
         + Ntwk.Synapse.gbarE*(Ntwk.Cnnct_EI.*WEI*Espikes);
-    Exmpl.InhbtgE(:,t+1) = InhbtgE(exampleI);
+    Exmpl.InhbtgE(t+1,:) = InhbtgE(exampleI)';
     InhbtgI = InhbtgI - InhbtgI/Ntwk.Synapse.tauInhbt*dt; % inhibitory synaptic conductance on Inhbt neurons
-    Exmpl.InhbtgI(:,t+1) = InhbtgI(exampleI);
+    Exmpl.InhbtgI(t+1,:) = InhbtgI(exampleI)';
 
     % Updating OU noise
     ExctNoise = ExctNoise + ((Ib - ExctNoise)/Ntwk.Noise.tauN + gpuArray.randn(Ntwk.Exct.N,1)*Ntwk.Noise.sgm)*dt;
-    Exmpl.ExctNoise(:,t+1) = ExctNoise(exampleE);
+    Exmpl.ExctNoise(t+1,:) = ExctNoise(exampleE)';
     InhbtNosie = InhbtNosie + ((Ib - InhbtNosie)/Ntwk.Noise.tauN + gpuArray.randn(Ntwk.Inhbt.N,1)*Ntwk.Noise.sgm)*dt;
     % Membrane potential change for Exct neurons
-    ExctRefraction = ExctRefraction - 1;
     dV = (Ntwk.Exct.gL*(Ntwk.VL - ExctV) + ExctgE.*(Ntwk.VE - ExctV) + ExctgI.*(Ntwk.VI - ExctV) + ExctNoise)/Ntwk.Exct.Cm*dt;
     ExctV = ExctV + dV;
     ExctV(ExctRefraction>0) = Ntwk.Vreset;
-
+    ExctRefraction = ExctRefraction - 1;
     % Exct neurons fire
     Espikes = ExctV > Ntwk.Vth;
     ExctV(Espikes) = Ntwk.Vfire;
-    Exmpl.ExctV(:,t+1) = ExctV(exampleE);
-    Exmpl.Espikes(:,t+1) = Espikes(exampleE);
+    Exmpl.ExctV(t+1,:) = ExctV(exampleE);
+    Exmpl.Espikes(t+1,:) = Espikes(exampleE);
     ExctRefraction(Espikes) = refractionPeriod.E;
 
     % Membrane potential change for Inhbt neurons
-    InhbtRefraction = InhbtRefraction - 1;
     dV = (Ntwk.Inhbt.gL*(Ntwk.VL - InhbtV) + InhbtgE.*(Ntwk.VE - InhbtV) + InhbtgI.*(Ntwk.VI - InhbtV) + InhbtNosie)/Ntwk.Inhbt.Cm*dt;
     InhbtV = InhbtV + dV;
     InhbtV(InhbtRefraction>0) = Ntwk.Vreset;
-
+    InhbtRefraction = InhbtRefraction - 1;
     % Inhbt neurons fire
     Ispikes = InhbtV > Ntwk.Vth;
     InhbtV(Ispikes) = Ntwk.Vfire-10;
-    Exmpl.InhbtV(:,t+1) = InhbtV(exampleI);
-    Exmpl.Ispikes(:,t+1) = Ispikes(exampleI);
+    Exmpl.InhbtV(t+1,:) = InhbtV(exampleI)';
+    Exmpl.Ispikes(t+1,:) = Ispikes(exampleI)';
     InhbtRefraction(Ispikes) = refractionPeriod.I;
     % visualization
     figure(h2);
     plot(Ntwk.Exct.Location(Espikes,1), Ntwk.Exct.Location(Espikes,2),'w.', 'MarkerSize', 2);
     plot(Ntwk.Inhbt.Location(Ispikes,1), Ntwk.Inhbt.Location(Ispikes,2),'r.', 'MarkerSize', 2);
-    if mod(t, 10000/100) == 1
+    if mod(t*dt, 10) == 1
         drawnow; % Update figure window
         % Capture the plot as an image and write to video
         frame = getframe(gcf);
@@ -274,9 +273,9 @@ for t = 1:(timesteps-1)
         plot(time(t)*ones(sum(Espikes),1), ExctVec(Espikes), 'k.', 'MarkerSize', 2);
         plot(time(t)*ones(sum(Ispikes),1), InhbtVec(Ispikes), 'r.', 'MarkerSize', 2);
     end
-    if mod(t, 10) == 0
+    if mod(t*dt, 10) == 0
         fprintf('.');
-        if mod(t,100)==0
+        if mod(t*dt,100)==0
             fprintf('%1.4f s\n', t*dt/1000);
         end
     end
@@ -302,142 +301,140 @@ savefig(h, fullfile(plotdir,filename));
 save(Rsltfile, 'Ntwk', 'Seq', 'Exmpl', 'WEI', 'WIE', 'WEE');
 
 %% visualizing example neurons
-% load(Rsltfile);
-% h = figure;
-% filename = 'Example neurons activity';
-% subplot(2,1,1); hold on;
-% lg = [];
-% lg(1) = plot(time/1000, Exmpl.ExctgE, 'k-');
-% lg(2) = plot(time/1000, Exmpl.ExctgI, 'k--');
-% lg(3) = plot(time/1000, Exmpl.InhbtgE, 'r-');
-% lg(4) = plot(time/1000, Exmpl.InhbtgI, 'r--');
-% legend(lg, {'gE on Exct cell','gI on Exct cell', 'gE on Inhbt cell','gI on Inhbt cell'}, 'Location','best');
-% xlim([0 duration/1000]);
-% xlabel('Time (s)');
-% ylabel('Conductance (nS)');
-% title('Synaptic activity');
-% mysavefig(h, filename, plotdir, 12, [8,4], 1);
-% subplot(2,2,3); hold on;
-% lg = [];
-% lg(1) = plot(time, Exmpl.ExctgE, 'k-');
-% lg(2) = plot(time, Exmpl.ExctgI, 'k--');
-% lg(3) = plot(time, Exmpl.InhbtgE, 'r-');
-% lg(4) = plot(time, Exmpl.InhbtgI, 'r--');
-% xlim([1900, 2500]);
-% xlabel('Time (ms)');
-% ylabel('Conductance (nS)');
-% title('Synaptic activity');
-% mysavefig(h, filename, plotdir, 12, [8,4], 1);
-% subplot(2,2,4); hold on;
-% lg = [];
-% lg(1) = plot(time, Exmpl.ExctV, 'k-');
-% lg(2) = plot(time, Exmpl.InhbtV, 'r-');
-% legend(lg, {'Exct', 'Inhbt'}, 'Location','best');
-% xlim([1900 2500]);
-% xlabel('Time (ms)');
-% ylabel('Membrane potential (mV)');
-% title('Activity of a single neuron');
-% mysavefig(h, filename, plotdir, 12, [8, 4], 1);
-% %% Synaptic weights on example neurons
-% h = figure;
-% filename = 'Example synaptic weights';
-% subplot(4,2,1); hold on;
-% lg = [];
-% lg(1) = plot(time/1000, Exmpl.xEpre, 'k-');
-% lg(2) = plot(time/1000, Exmpl.xEpost, 'k--');
-% lg(3) = plot(time/1000, Exmpl.xIpre, 'r-');
-% lg(4) = plot(time/1000, Exmpl.xIpost, 'r--');
-% xlim([0 duration/1000]);
-% xlabel('Time (s)');
-% ylabel('Kernel of weight');
-% title('STDP Integration');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% subplot(4,2,3); hold on;
-% plot(time/1000, Exmpl.WEI, 'k-');
-% xlim([0 duration/1000]);
-% xlabel('Time (s)');
-% ylabel('Plastic weight');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% subplot(4,2,5); hold on;
-% plot(time/1000, Exmpl.WIE, 'r-');
-% xlim([0 duration/1000]);
-% xlabel('Time (s)');
-% ylabel('Plastic weight');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% subplot(4,2,7); hold on;
-% plot(time/1000, Exmpl.WEE, 'k--');
-% xlim([0 duration/1000]);
-% xlabel('Time (s)');
-% ylabel('Plastic weight');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% 
-% subplot(4,2,2); hold on;
-% lg = [];
-% lg(1) = plot(time, Exmpl.xEpre, 'k-');
-% lg(2) = plot(time, Exmpl.xEpost, 'k--');
-% lg(3) = plot(time, Exmpl.xIpre, 'r-');
-% lg(4) = plot(time, Exmpl.xIpost, 'r--');
-% legend(lg, {'xEpre','xEpost', 'xIpre','xIpost'}, 'Location','best');
-% xlim([1900 2500]);
-% xlabel('Time (ms)');
-% ylabel('Kernel of weight');
-% title('STDP Integration');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% subplot(4,2,4); hold on;
-% plot(time, Exmpl.WEI, 'k-');
-% legend('WEI', 'Location','best');
-% xlim([1900 2500]);
-% xlabel('Time (ms)');
-% ylabel('Plastic weight');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% subplot(4,2,6); hold on;
-% plot(time, Exmpl.WIE, 'r-');
-% legend('WIE', 'Location','best');
-% xlim([1900 2500]);
-% xlabel('Time (ms)');
-% ylabel('Plastic weight');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% subplot(4,2,8); hold on;
-% plot(time, Exmpl.WEE, 'k--');
-% legend('WEE', 'Location','best');
-% xlim([1900 2500]);
-% xlabel('Time (ms)');
-% ylabel('Plastic weight');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% 
-% 
-% %% visualize weight change
-% h = figure;
-% filename = 'WEI_change_51s';
-% imagesc(WEI - Ntwk.wEI_initial)
-% colormap(bluewhitered);
-% c = colorbar;
-% c.Label.String = 'Weight change';
-% c.Location = 'northoutside';
-% xlabel("Exct neurons");
-% ylabel("Inhbt neurons");
-% mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
-% 
-% h = figure;
-% filename = 'WIE_change_51s';
-% imagesc(WIE - Ntwk.wIE_initial)
-% colormap(bluewhitered);
-% c = colorbar;
-% c.Label.String = 'Weight change';
-% c.Location = 'northoutside';
-% xlabel("Inhbt neurons");
-% ylabel("Exct neurons");
-% mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
-% 
-% h = figure;
-% filename = 'WEE_change_51s';
-% imagesc(WEE - Ntwk.wEE_initial)
-% colormap(bluewhitered);
-% c = colorbar;
-% c.Label.String = 'Weight change';
-% c.Location = 'northoutside';
-% xlabel("Exct neurons");
-% ylabel("Exct neurons");
-% mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
-% %%
-% EvalTuning(Ntwk,WEE,WEI,WIE,OKeeffe,plotdir);
+load(Rsltfile);
+h = figure;
+filename = 'Example neurons activity';
+subplot(2,1,1); hold on;
+lg = [];
+lg(1) = plot(time/1000, Exmpl.ExctgE(:,1), 'k-');
+lg(2) = plot(time/1000, Exmpl.ExctgI(:,1), 'k--');
+lg(3) = plot(time/1000, Exmpl.InhbtgE(:,1), 'r-');
+lg(4) = plot(time/1000, Exmpl.InhbtgI(:,1), 'r--');
+legend(lg, {'gE on Exct cell','gI on Exct cell', 'gE on Inhbt cell','gI on Inhbt cell'}, 'Location','best');
+xlim([0 duration/1000]);
+xlabel('Time (s)');
+ylabel('Conductance (nS)');
+title('Synaptic activity');
+mysavefig(h, filename, plotdir, 12, [8,4], 1);
+subplot(2,2,3); hold on;
+lg = [];
+lg(1) = plot(time, Exmpl.ExctgE(:,1), 'k-');
+lg(2) = plot(time, Exmpl.ExctgI(:,1), 'k--');
+lg(3) = plot(time, Exmpl.InhbtgE(:,1), 'r-');
+lg(4) = plot(time, Exmpl.InhbtgI(:,1), 'r--');
+xlim([leftt, leftt+700]);
+xlabel('Time (ms)');
+ylabel('Conductance (nS)');
+title('Synaptic activity');
+mysavefig(h, filename, plotdir, 12, [8,4], 1);
+subplot(2,2,4); hold on;
+lg = [];
+lg(1) = plot(time, Exmpl.ExctV(:,1), 'k-');
+lg(2) = plot(time, Exmpl.InhbtV(:,1), 'r-');
+legend(lg, {'Exct', 'Inhbt'}, 'Location','best');
+xlim([leftt, leftt+700]);
+xlabel('Time (ms)');
+ylabel('Membrane potential (mV)');
+title('Activity of a single neuron');
+mysavefig(h, filename, plotdir, 12, [8, 4], 1);
+%% Synaptic weights on example neurons
+h = figure;
+filename = 'Example synaptic weights';
+subplot(4,2,1); hold on;
+lg = [];
+lg(1) = plot(time/1000, Exmpl.xEpre(:,1), 'k-');
+lg(2) = plot(time/1000, Exmpl.xIpre(:,1), 'r-');
+%lg(3) = plot(time/1000, Exmpl.xEpost, 'k--');
+%lg(4) = plot(time/1000, Exmpl.xIpost, 'r--');
+xlim([0 duration/1000]);
+xlabel('Time (s)');
+ylabel('Integration');
+title('STDP Integration');
+mysavefig(h, filename, plotdir, 12, [8,8], 1);
+subplot(4,2,3); hold on;
+plot(time/1000, squeeze(Exmpl.WEI(:,1,1)), 'k-');
+xlim([0 duration/1000]);
+xlabel('Time (s)');
+ylabel('wEI');
+mysavefig(h, filename, plotdir, 12, [8,8], 1);
+subplot(4,2,5); hold on;
+plot(time/1000, squeeze(Exmpl.WIE(:,1,1)), 'r-');
+xlim([0 duration/1000]);
+xlabel('Time (s)');
+ylabel('wIE');
+mysavefig(h, filename, plotdir, 12, [8,8], 1);
+subplot(4,2,7); hold on;
+plot(time/1000, squeeze(Exmpl.WEE(:,2,1)), 'k--');
+xlim([0 duration/1000]);
+xlabel('Time (s)');
+ylabel('wEE');
+mysavefig(h, filename, plotdir, 12, [8,8], 1);
+subplot(4,2,2); hold on;
+lg = [];
+lg(1) = plot(time, Exmpl.xEpre(:,1), 'k-');
+lg(2) = plot(time, Exmpl.xIpre(:,1), 'r-');
+% lg(3) = plot(time, Exmpl.xEpost(1,:), 'k--');
+% lg(4) = plot(time, Exmpl.xIpost(1,:), 'r--');
+legend(lg, {'xE', 'xI'}, 'Location','best');
+xlim([leftt leftt+700]);
+xlabel('Time (ms)');
+ylabel('Integration');
+title('STDP Integration');
+mysavefig(h, filename, plotdir, 12, [8,8], 1);
+subplot(4,2,4); hold on;
+plot(time, squeeze(Exmpl.WEI(:,1,1)), 'k-');
+legend('WEI', 'Location','best');
+xlim([leftt leftt+700]);
+xlabel('Time (ms)');
+ylabel('wEI');
+mysavefig(h, filename, plotdir, 12, [8,8], 1);
+subplot(4,2,6); hold on;
+plot(time, squeeze(Exmpl.WIE(:,1,1)), 'r-');
+legend('WIE', 'Location','best');
+xlim([leftt leftt+700]);
+xlabel('Time (ms)');
+ylabel('wIE');
+mysavefig(h, filename, plotdir, 12, [8,8], 1);
+subplot(4,2,8); hold on;
+plot(time, squeeze(Exmpl.WEE(:,2,1)), 'k--');
+legend('WEE', 'Location','best');
+xlim([leftt leftt+700]);
+xlabel('Time (ms)');
+ylabel('wEE');
+mysavefig(h, filename, plotdir, 12, [8,8], 1);
+
+%% visualize weight change
+h = figure;
+filename = sprintf('WEI_change_%1.1fs', duration/1000);
+imagesc(WEI - Ntwk.wEI_initial)
+colormap(bluewhitered);
+c = colorbar;
+c.Label.String = 'Weight change';
+c.Location = 'northoutside';
+xlabel("Exct neurons");
+ylabel("Inhbt neurons");
+mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
+
+h = figure;
+filename = sprintf('WIE_change_%1.1fs', duration/1000);
+imagesc(WIE - Ntwk.wIE_initial)
+colormap(bluewhitered);
+c = colorbar;
+c.Label.String = 'Weight change';
+c.Location = 'northoutside';
+xlabel("Inhbt neurons");
+ylabel("Exct neurons");
+mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
+
+h = figure;
+filename = sprintf('WEE_change_%1.1fs', duration/1000);
+imagesc(WEE - Ntwk.wEE_initial)
+colormap(bluewhitered);
+c = colorbar;
+c.Label.String = 'Weight change';
+c.Location = 'northoutside';
+xlabel("Exct neurons");
+ylabel("Exct neurons");
+mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
+%%
+EvalTuning(Ntwk,WEE,WEI,WIE,OKeeffe,plotdir);

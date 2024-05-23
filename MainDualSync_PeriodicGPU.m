@@ -1,14 +1,14 @@
 %% define I/O
 DefineIO;
 %% Define time vector
-dt = .1; % ms, time precision for simulation, in unit of second
-duration = 7100; % ms
+dt = 1; % ms, time precision for simulation, in unit of second
+duration = 2068001; % ms
 % Time vector
-time = [0:dt:duration]';
+time = [dt:dt:duration]';
 timesteps = numel(time);
 ProjectName = sprintf('DualSyncTestGPU_%1.1fs', duration/1000);
 % Spike train of the input, example trials
-Ntrial = 6;
+Ntrial = 258;
 rng(29);
 Seq = CreateEvents(Ntrial, dt/1000);
 Seq = Seq(1:timesteps, 1:2)';
