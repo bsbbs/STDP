@@ -8,7 +8,7 @@ if ~exist(Ntwkfile, 'file')
     Ntwk.Inhbt.Location = [];
     Ntwk.Inhbt.N = 2000;
     Ntwk.Inhbt.AxonRange = 50; % um, the standard deviation of axon physical connection range for interneurons
-    Ntwk.Smpl.E = 3992;
+    Ntwk.Smpl.E = 3999;
     Ntwk.Smpl.I = 1000;
     %% Plasticity kernel
     % time constant of synaptic plasticity for pre-post and post-pre kernels
@@ -57,18 +57,19 @@ if ~exist(Ntwkfile, 'file')
     %% Physical location of the cells, assuming located on the same layer, thus
     % spreading the 2-D space
     % locations of excitatory cells
-    gpurng(2024);
+    randomseed = 2026;
+    gpurng(randomseed);
     xE = -Ntwk.Scale + gpuArray.rand(Ntwk.Exct.N,1)*Ntwk.Scale*2;
     [xE, ~] = sort(xE);
-    gpurng(2024);
+    gpurng(randomseed);
     yE = -Ntwk.Scale/2 + gpuArray.rand(Ntwk.Exct.N,1)*Ntwk.Scale; % zeros(Ntwk.Exct.N,1); % assume all neurons approximately on the same layer
     Ntwk.Exct.Location = [xE, yE];
     clear xE yE;
     % locations of Inhibitory cells
-    gpurng(2024);
+    gpurng(randomseed);
     xI = -Ntwk.Scale + gpuArray.rand(Ntwk.Inhbt.N,1)*Ntwk.Scale*2;
     [xI, ~] = sort(xI);
-    gpurng(2024);
+    gpurng(randomseed);
     yI = -Ntwk.Scale/2 + gpuArray.rand(Ntwk.Inhbt.N,1)*Ntwk.Scale;
     Ntwk.Inhbt.Location = [xI, yI];
     clear xI yI;
@@ -79,7 +80,7 @@ if ~exist(Ntwkfile, 'file')
     [YE, YI] = meshgrid(Ntwk.Exct.Location(:,2), Ntwk.Inhbt.Location(:,2));
     DstcEI = sqrt(min(Ntwk.Scale*2-abs(XE - XI), abs(XE - XI)).^2 + min(Ntwk.Scale - abs(YE - YI), abs(YE - YI)).^2); % Euclidean distance between each pair of Exct and Inhbt neurons
     p_EI = exp(-.5*(DstcEI/Ntwk.Exct.AxonRange).^2); %1 - (1 - exp(-DstcEI/Ntwk.Exct.AxonRange)).^4; % probability of physical connection from E to I based on distance
-    gpurng(2024);
+    gpurng(randomseed);
     Ntwk.Cnnct_EI = p_EI >= gpuArray.rand(size(p_EI)); % connections from E to I, 0 or 1
     clear XE XI YE YI DstcEI p_EI;
     % possible synaptic connection from I -> E
@@ -87,7 +88,7 @@ if ~exist(Ntwkfile, 'file')
     [YI, YE] = meshgrid(Ntwk.Inhbt.Location(:,2), Ntwk.Exct.Location(:,2));
     DstcIE = sqrt(min(Ntwk.Scale*2-abs(XI - XE), abs(XI - XE)).^2 + min(Ntwk.Scale - abs(YI - YE), abs(YI - YE)).^2); % Euclidean distance between each pair of Inhbt and Exct neurons
     p_IE = exp(-.5*(DstcIE/Ntwk.Inhbt.AxonRange).^2); % probability of connection from I to E based on distance
-    gpurng(2024);
+    gpurng(randomseed);
     Ntwk.Cnnct_IE = p_IE >= gpuArray.rand(size(p_IE)); % connections from I to E, 0 or 1
     clear XE XI YE YI DstcIE p_IE;
     % possible synaptic connection from E -> E
@@ -95,7 +96,7 @@ if ~exist(Ntwkfile, 'file')
     [YE1, YE2] = meshgrid(Ntwk.Exct.Location(:,2), Ntwk.Exct.Location(:,2));
     DstcEE = sqrt(min(Ntwk.Scale*2-abs(XE1 - XE2), abs(XE1 - XE2)).^2 + min(Ntwk.Scale - abs(YE1 - YE2), abs(YE1 - YE2)).^2); %  Euclidean distance between each pair of Exct neurons
     p_EE = exp(-.5*(DstcEE/Ntwk.Exct.AxonRange).^2); % probability of connection from E to E based on distance
-    gpurng(2024);
+    gpurng(randomseed);
     Ntwk.Cnnct_EE = p_EE >= gpuArray.rand(size(p_EE)); % connections from E to E, 0 or 1
     clear XE1 XE2 YE1 YE2 DstcEE p_EE;
     % possible synaptic connection from I -> I was not assumed since we do
@@ -135,7 +136,7 @@ if ~exist(Ntwkfile, 'file')
     end
     %% Synaptic weights for those possible connections defined above
     % initial weights
-    rng(2024);
+    gpurng(randomseed);
     Ntwk.wEI_initial = .1*gpuArray.rand(size(Ntwk.Cnnct_EI)).*Ntwk.Cnnct_EI; % synaptic weight from E to I, weak initial connections from E to I
     Ntwk.wIE_initial = .1*gpuArray.rand(size(Ntwk.Cnnct_IE)).*Ntwk.Cnnct_IE; % synaptic weight from I to E, weak initial connections from the nearby SST
     Ntwk.wEE_initial = .1*gpuArray.rand(size(Ntwk.Cnnct_EE)).*Ntwk.Cnnct_EE; % synaptic weight from E to E, weak initial connections of self-excitation
