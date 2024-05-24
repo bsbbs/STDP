@@ -297,11 +297,9 @@ ylabel('Neurons');
 title('Raster plot of Exct/Inhbt neurons');
 mysavefig(h, filename, plotdir, 12, [8, 6], 1);
 savefig(h, fullfile(plotdir,filename));
-% Save results
-save(Rsltfile, 'Ntwk', 'Seq', 'Exmpl', 'WEI', 'WIE', 'WEE');
 
 %% visualizing example neurons
-load(Rsltfile);
+% load(Rsltfile);
 h = figure;
 filename = 'Example neurons activity';
 subplot(2,1,1); hold on;
@@ -438,3 +436,8 @@ ylabel("Exct neurons");
 mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
 %%
 EvalTuning(Ntwk,WEE,WEI,WIE,OKeeffe,plotdir);
+
+%% Save results
+close all;
+clearvars -except 'Ntwk' 'Seq' 'Exmpl' 'WEI' 'WIE' 'WEE';
+save(Rsltfile, 'Ntwk', 'Seq', 'Exmpl', 'WEI', 'WIE', 'WEE', '-v7.3');
