@@ -12,7 +12,7 @@ elseif strcmp(os, 'PCWIN64')
     Gitdir = 'C:\Users\Bo\Documents\GitHub\STDP';
 end
 gnrloutdir = fullfile(Projdir, 'General');
-if ~exist("gnrloutdir",'dir')
+if ~exist(gnrloutdir,'dir')
     mkdir(gnrloutdir);
 end
 addpath(genpath(Gitdir));

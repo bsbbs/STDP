@@ -170,7 +170,7 @@ moviename = 'RealtimeMonitor'; % Name of the video file
 % Prepare the video file
 profiles = VideoWriter.getProfiles();
 disp(profiles);
-writerObj = VideoWriter(fullfile(plotdir, moviename), profiles(6));
+writerObj = VideoWriter(fullfile(plotdir, moviename), 'Motion JPEG AVI');
 writerObj.FrameRate = 100; % Adjust frame rate as needed
 writerObj.Quality = 95;   % Set quality to maximum for best results (only for MPEG-4)
 open(writerObj);
