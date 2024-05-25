@@ -1,4 +1,4 @@
-Ntwkfile = fullfile(gnrloutdir, 'NtkwPrdcGPU.mat');
+Ntwkfile = fullfile(gnrloutdir, 'NtwkPrdcGPU.mat');
 if ~exist(Ntwkfile, 'file')
     %% The structure of the network
     Ntwk.Scale = 1000; % um, scale of the micro structure to test, assumed as one dimentional 
