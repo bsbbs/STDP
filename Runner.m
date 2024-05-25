@@ -168,7 +168,9 @@ Exmpl.ExctNoise = [ExctNoise(exampleE,1)'; zeros(timesteps-1, numel(exampleE))];
 filename = 'RealtimeMonitor';
 moviename = 'RealtimeMonitor'; % Name of the video file
 % Prepare the video file
-writerObj = VideoWriter(fullfile(plotdir, moviename), 'MPEG-4');
+profiles = VideoWriter.getProfiles();
+disp(profiles);
+writerObj = VideoWriter(fullfile(plotdir, moviename), profiles(6));
 writerObj.FrameRate = 100; % Adjust frame rate as needed
 writerObj.Quality = 95;   % Set quality to maximum for best results (only for MPEG-4)
 open(writerObj);
