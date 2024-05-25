@@ -439,5 +439,5 @@ EvalTuning(Ntwk,WEE,WEI,WIE,OKeeffe,plotdir);
 
 %% Save results
 close all;
-clearvars -except 'Ntwk' 'Seq' 'Exmpl' 'WEI' 'WIE' 'WEE';
+clearvars -except 'Ntwk' 'Seq' 'Exmpl' 'WEI' 'WIE' 'WEE' 'Rsltfile';
 save(Rsltfile, 'Ntwk', 'Seq', 'Exmpl', 'WEI', 'WIE', 'WEE', '-v7.3');
