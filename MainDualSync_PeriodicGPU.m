@@ -2,13 +2,13 @@
 DefineIO;
 %% Define time vector
 dt = 1; % ms, time precision for simulation, in unit of second
-duration = 2068001; % ms
+duration = 4500000; % ms
 % Time vector
 time = [dt:dt:duration]';
 timesteps = numel(time);
 ProjectName = sprintf('DualSyncTestGPU_%1.1fs', duration/1000);
 % Spike train of the input, example trials
-Ntrial = 258;
+Ntrial = 1600;
 rng(29);
 Seq = CreateEvents(Ntrial, dt/1000);
 Seq = Seq(1:timesteps, 1:2)';

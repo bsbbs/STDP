@@ -166,14 +166,18 @@ InhbtNosie = Ib + gpuArray.randn(Ntwk.Inhbt.N,1)*Ntwk.Noise.sgm; % OU noise on i
 Exmpl.ExctNoise = [ExctNoise(exampleE,1)'; zeros(timesteps-1, numel(exampleE))]; % ExctNoise(exampleE,1)
 % simulation start...
 filename = 'RealtimeMonitor';
-moviename = 'RealtimeMonitor'; % Name of the video file
+moviename1 = 'RealtimeMonitor_begin'; % Name of the video file
+moviename2 = 'RealtimeMonitor_end'; % Name of the video file
 % Prepare the video file
 profiles = VideoWriter.getProfiles();
 disp(profiles);
-writerObj = VideoWriter(fullfile(plotdir, moviename), 'Motion JPEG AVI');
-writerObj.FrameRate = 100; % Adjust frame rate as needed
-writerObj.Quality = 95;   % Set quality to maximum for best results (only for MPEG-4)
-open(writerObj);
+writerObj1 = VideoWriter(fullfile(plotdir, moviename1), 'Motion JPEG AVI');
+writerObj1.FrameRate = 100; % Adjust frame rate as needed
+writerObj1.Quality = 95;   % Set quality to maximum for best results (only for MPEG-4)
+writerObj2 = VideoWriter(fullfile(plotdir, moviename2), 'Motion JPEG AVI');
+writerObj2.FrameRate = 100; % Adjust frame rate as needed
+writerObj2.Quality = 95;   % Set quality to maximum for best results (only for MPEG-4)
+
 ExctVec = 1:Ntwk.Exct.N;
 InhbtVec = [1:Ntwk.Inhbt.N]*4;
 h1 = figure;
@@ -188,6 +192,7 @@ xlabel('x (\mum)', 'Color', 'w');
 ylabel('y (\mum)', 'Color', 'w');
 xlim([-Ntwk.Scale, Ntwk.Scale]);
 ylim([-Ntwk.Scale/2, Ntwk.Scale/2]);
+open(writerObj1);
 for t = 1:(timesteps-1)
     % input spikes
     InputSpikes = gpuArray.rand(Ntwk.Input.N,1);
@@ -204,12 +209,15 @@ for t = 1:(timesteps-1)
     Exmpl.xIpost(t+1,:) = xIpost(exampleI)';
     WEI = WEI + Ntwk.ExctSTDP.eta*(Ntwk.ExctSTDP.sign_postpre*xIpost*Espikes' + Ntwk.ExctSTDP.intercept_pre*ones(size(Ispikes))*Espikes' ... % post -> pre
         + Ntwk.ExctSTDP.sign_prepost*Ispikes*xEpre + Ntwk.ExctSTDP.intercept_post*Ispikes*ones(size(Espikes'))); % pre -> post
+    WEI(WEI<0) = 0;
     Exmpl.WEI(t+1,:,:) = WEI(exampleI, exampleE);
     WIE = WIE + Ntwk.InhbtSTDP.eta*(Ntwk.InhbtSTDP.sign_postpre*xEpost*Ispikes' + Ntwk.InhbtSTDP.intercept_pre*ones(size(Espikes))*Ispikes' ... % post -> pre
         + Ntwk.InhbtSTDP.sign_prepost*Espikes*xIpre + Ntwk.InhbtSTDP.intercept_post*Espikes*ones(size(Ispikes'))); % pre -> post
+    WIE(WIE<0) = 0;
     Exmpl.WIE(t+1,:,:) = WIE(exampleE, exampleI);
     WEE = WEE + Ntwk.ExctSTDP.eta*(Ntwk.ExctSTDP.sign_postpre*xEpost*Espikes' + Ntwk.ExctSTDP.intercept_pre*ones(size(Espikes))*Espikes' ... % post -> pre
         + Ntwk.ExctSTDP.sign_prepost*Espikes*xEpre + Ntwk.ExctSTDP.intercept_post*Espikes*ones(size(Espikes'))); % pre -> post
+    WEE(WEE<0) = 0;
     Exmpl.WEE(t+1,:,:) = WEE(exampleE, exampleE);
 
     % Synaptic activities
@@ -253,15 +261,28 @@ for t = 1:(timesteps-1)
     Exmpl.Ispikes(t+1,:) = Ispikes(exampleI)';
     InhbtRefraction(Ispikes) = refractionPeriod.I;
     % visualization
-    figure(h2);
-    plot(Ntwk.Exct.Location(Espikes,1), Ntwk.Exct.Location(Espikes,2),'w.', 'MarkerSize', 2);
-    plot(Ntwk.Inhbt.Location(Ispikes,1), Ntwk.Inhbt.Location(Ispikes,2),'r.', 'MarkerSize', 2);
-    if mod(t*dt, 10) == 1
-        drawnow; % Update figure window
-        % Capture the plot as an image and write to video
-        frame = getframe(gcf);
-        writeVideo(writerObj, frame);
-        cla;
+    if t <= 10000/dt || t >= timesteps-1 - 10000/dt
+        figure(h2);
+        plot(Ntwk.Exct.Location(Espikes,1), Ntwk.Exct.Location(Espikes,2),'w.', 'MarkerSize', 2);
+        plot(Ntwk.Inhbt.Location(Ispikes,1), Ntwk.Inhbt.Location(Ispikes,2),'r.', 'MarkerSize', 2);
+        if t <= 10000/dt % 10s sample
+            writerObj = writerObj1; 
+        elseif t >= timesteps-1 - 10000/dt % 10s sample
+            if t == timesteps-1 - 10000/dt
+                open(writerObj2);
+            end
+            writerObj = writerObj2; 
+        end
+        if mod(t*dt, 10) == 1
+            drawnow; % Update figure window
+            frame = getframe(gcf);
+            writeVideo(writerObj, frame);
+            cla;
+        end
+        if t == 10000/dt
+            cla;
+            close(writerObj1);
+        end
     end
     if t <= 5000/dt
         figure(h1);
@@ -284,21 +305,21 @@ for t = 1:(timesteps-1)
 end
 fprintf('Successfully completed\n');
 % Close the video file
-close(writerObj);
+close(writerObj2);
 figure(h1); subplot(1,2,1);
 axis([leftt rightt 0 Ntwk.Exct.N]);
 % axis([43575, 44175, 0 Ntwk.Exct.N]);
 xlabel('Time (ms)');
 ylabel('Neurons');
 title('Raster plot of Exct/Inhbt neurons');
-mysavefig(h, filename, plotdir, 12, [8, 6], 1);
+mysavefig(h1, filename, plotdir, 12, [8, 6], 1);
 subplot(1,2,2);
 axis([duration-5000, duration, 0 Ntwk.Exct.N]);
 xlabel('Time (ms)');
 ylabel('Neurons');
 title('Raster plot of Exct/Inhbt neurons');
-mysavefig(h, filename, plotdir, 12, [8, 6], 1);
-savefig(h, fullfile(plotdir,filename));
+mysavefig(h1, filename, plotdir, 12, [8, 6], 1);
+savefig(h1, fullfile(plotdir,filename));
 
 %% visualizing example neurons
 % load(Rsltfile);

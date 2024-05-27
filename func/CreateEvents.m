@@ -4,34 +4,21 @@ tprslt = dt; % temporal resolution
 dur.representation = .5;
 dur.choice = .5;
 dur.feedback = 0;
-% - ITI, exponential distributed with mean 4s
-meanvalue = 4;
-maxITI = 12;
-minITI = 1;
-pracMeanITI = 3.4965; % practical mean value of exponential distribution when considering truncation
+% - ITI, exponential distributed with mean 1s
+meanvalue = 1;
+maxITI = 1.9;
+minITI = .1;
 tolerance = .01;
-ITI = 0;
-Pool = exprnd(pracMeanITI,Ntrial*10,1) + minITI;
-Pool = Pool(Pool < maxITI);
-while mean(ITI) < meanvalue - tolerance || mean(ITI) > meanvalue + tolerance
-    ITI = randsample(Pool,Ntrial);
-end
+ITI = rand(Ntrial,1)*(maxITI - minITI) + minITI;
 
 % - Event 1 - presentation of value coding for 4 secs
 ev1 = ones(Ntrial,1)*dur.representation;
 
-% - ISI, exponential distributed with mean 3s
-meanvalue = 3;
-maxISI = 8;
-minISI = .2;
-pracMeanISI = 4.3796;
-tolerance = .01;
-ISI = 0;
-Pool = exprnd(pracMeanISI,Ntrial*10,1) + minISI;
-Pool = Pool(Pool < maxISI);
-while mean(ISI) < meanvalue - tolerance || mean(ISI) > meanvalue + tolerance
-    ISI = randsample(Pool,Ntrial);
-end
+% - ISI, exponential distributed with mean 1s
+meanvalue = 1;
+maxISI = 1.9;
+minISI = .1;
+ISI = rand(Ntrial,1)*(maxISI - minISI) + minISI;
 
 % - Event 2 - presentation of choice for 2.5 secs and feedback for .5
 % sec
@@ -42,12 +29,11 @@ tp1 = cumsum(ITI + [0;  ev1(1:end-1) + ISI(1:end-1) + ev2(1:end-1)]); % time poi
 tpISI = cumsum(ITI + ev1 +  [0; ISI(1:end-1) + ev2(1:end-1)]); % time point of ISI
 tp2 = cumsum(ITI + ev1 + ISI + [0; ev2(1:end-1)]); % time point of decision
 
-%         h = figure; hold on;
-%         plot(tpITI, zeros(size(tp1)),'b.');
-%         plot(tp1, zeros(size(tp1)),'r|');
-%         plot(tpISI, zeros(size(tp1)),'r.');
-%         plot(tp2, zeros(size(tp1)),'b|');
-
+% h = figure; hold on;
+% plot(tpITI, zeros(size(tp1)),'b.');
+% plot(tp1, zeros(size(tp1)),'r|');
+% plot(tpISI, zeros(size(tp1)),'r.');
+% plot(tp2, zeros(size(tp1)),'b|');
 
 % creat event boxcar function
 Tdur = ceil(tp2(end) + 3);
