@@ -1,0 +1,17 @@
+#!/bin/bash
+#SBATCH --job-name=Async
+#SBATCH --mem=60G
+#SBATCH --time=2-00:00:00
+#SBATCH --tasks=1
+#SBATCH --cpus-per-task=10
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:1
+#SBATCH --mail-type=END
+#SBATCH --mail-user=bs3667@nyu.edu
+cd ~/STDP
+module purge
+module load cuda/10.2.89
+module load matlab/2021b
+matlab -nodisplay -r MainDualAsync_PeriodicGPU
+
