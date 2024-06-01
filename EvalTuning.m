@@ -1,13 +1,15 @@
-function EvalTuning(Ntwk, WEE, WEI, WIE, Mycolormap, plotdir)
+function EvalTuning(Ntwk, WEE, WEI, WIE, OKeeffe, plotdir)
 % Evaluating connection weigths over tuning of inputs.
 %% general parameters
 xinterval = Ntwk.Scale/60;
 xvec = -Ntwk.Scale:xinterval:Ntwk.Scale;
 %% Connection weights as a function of the location of the neurons 
 % E-to-I connection weights
-h = figure; hold on;
-filename = 'wEI_over_LocationE';
+h = figure; 
+filename = 'SynapticWeights_over_Locations';
+subplot(3,1,1);hold on;
 legendLabels = {'Before','After'};
+lgd = [];
 for i = 1:2
     if i == 1
         wEI = Ntwk.wEI_initial;
@@ -16,24 +18,25 @@ for i = 1:2
     end
     Cnnct.EtoI = zeros(1, numel(xvec)-1);
     for xi = 1:(numel(xvec)-1)
-        Cnnct.EtoI(xi) = sum(wEI(:, Ntwk.Exct.Location(:,1) >= xvec(xi) &...
-            Ntwk.Exct.Location(:,1) <= xvec(xi) + xinterval), 'all');
+        Cnnct.EtoI(xi) = sum(wEI(Ntwk.Inhbt.Location(:,1) >= xvec(xi) &...
+            Ntwk.Inhbt.Location(:,1) <= xvec(xi) + xinterval, :), 'all');
     end
     if i == 1
-        lgd(i) = plot(xvec(1:end-1)+xinterval/2, Cnnct.EtoI, '--', 'LineWidth', 1,'Color', 'k');
+        lgd(i) = plot(xvec(1:end-1)+xinterval/2, Cnnct.EtoI, ':', 'LineWidth', .75,'Color', 'k');
     else
-        lgd(i) = plot(xvec(1:end-1)+xinterval/2, Cnnct.EtoI, '-', 'LineWidth', 1,'Color', 'k');
+        lgd(i) = plot(xvec(1:end-1)+xinterval/2, Cnnct.EtoI, '-', 'LineWidth', .75,'Color', 'k');
     end
-    xlabel('E neurons'' location (\mum)');
-    ylabel('E to I weights');
 end
 legend(flip(lgd), flip(legendLabels), 'Location', 'best');
-mysavefig(h, filename, plotdir, 12, [2.5, 2.5/2], 2);
+xlabel('Locations of I neurons (\mum)');
+ylabel('Effective weights');
+title('E to I');
+autoy = ylim();
+ylim([autoy(1)-0.1*(range(autoy)),autoy(2)]);
+mysavefig(h, filename, plotdir, 12, [2.5, 5], 2);
 
 % I-to-E connection weights
-h = figure; hold on;
-filename = 'wIE_over_LocationI';
-legendLabels = {'Before','After'};
+subplot(3,1,2);hold on;
 for i = 1:2
     if i == 1
         wIE = Ntwk.wIE_initial;
@@ -46,20 +49,20 @@ for i = 1:2
             Ntwk.Inhbt.Location(:,1) <= xvec(xi) + xinterval), 'all');
     end
     if i == 1
-        lgd(i) = plot(xvec(1:end-1)+xinterval/2, Cnnct.ItoE, '--', 'LineWidth', 1,'Color', 'k');
+        lgd(i) = plot(xvec(1:end-1)+xinterval/2, Cnnct.ItoE, ':', 'LineWidth', .75,'Color', 'k');
     else
-        lgd(i) = plot(xvec(1:end-1)+xinterval/2, Cnnct.ItoE, '-', 'LineWidth', 1,'Color', 'k');
+        lgd(i) = plot(xvec(1:end-1)+xinterval/2, Cnnct.ItoE, '-', 'LineWidth', .75,'Color', 'k');
     end
-    xlabel('I neurons'' location (\mum)');
-    ylabel('I to E weights');
 end
-legend(flip(lgd), flip(legendLabels), 'Location', 'best');
-mysavefig(h, filename, plotdir, 12, [2.5, 2.5/2], 2);
+xlabel('Locations of I neurons (\mum)');
+ylabel('Synaptic weights');
+title('I to E');
+autoy = ylim();
+ylim([autoy(1)-0.1*(range(autoy)),autoy(2)]);
+mysavefig(h, filename, plotdir, 12, [2.5, 5], 2);
 
 % E-to-E connection weights (supplementary figure)
-h = figure; hold on;
-filename = 'wEE_over_LocationI';
-legendLabels = {'Before','After'};
+subplot(3,1,3); hold on;
 for i = 1:2
     if i == 1
         wEE = Ntwk.wEE_initial;
@@ -72,20 +75,23 @@ for i = 1:2
             Ntwk.Exct.Location(:,1) <= xvec(xi) + xinterval), 'all');
     end
     if i == 1
-        lgd(i) = plot(xvec(1:end-1)+xinterval/2, Cnnct.EtoE, '--', 'LineWidth', 1,'Color', 'k');
+        lgd(i) = plot(xvec(1:end-1)+xinterval/2, Cnnct.EtoE, ':', 'LineWidth', .75, 'Color', 'k');
     else
-        lgd(i) = plot(xvec(1:end-1)+xinterval/2, Cnnct.EtoE, '-', 'LineWidth', 1,'Color', 'k');
+        lgd(i) = plot(xvec(1:end-1)+xinterval/2, Cnnct.EtoE, '-', 'LineWidth', .75, 'Color', 'k');
     end
-    xlabel('E neurons'' location (\mum)');
-    ylabel('E to E weights');
 end
-legend(flip(lgd), flip(legendLabels), 'Location', 'best');
-mysavefig(h, filename, plotdir, 12, [2.5, 2.5/2], 2);
+xlabel('Locations of E neurons (\mum)');
+ylabel('Synaptic weights');
+title('E to E');
+autoy = ylim();
+ylim([autoy(1)-0.1*(range(autoy)),autoy(2)]);
+mysavefig(h, filename, plotdir, 12, [2.5, 5], 2);
 
 %% Effective connection weights
 % E-to-I connection weights, tuning to input sources
-h = figure; hold on;
-filename = 'Effctv_wEI_over_LocationI';
+h = figure;
+filename = 'Effctv_weights';
+subplot(3,1,1); hold on;
 legendLabels = {'After - Input 1','Before - Input 1', 'After - Input 2','Before - Input 2'};
 for i = 1:2
     if i == 1
@@ -101,21 +107,22 @@ for i = 1:2
                 Ntwk.Inhbt.Location(:,1) <= xvec(xi) + xinterval, Ntwk.Input.Origins == si), 'all');
         end
         if i == 1
-            lgd(i,si) = plot(xvec(1:end-1)+xinterval/2, Tuning.EtoI(si,:),'--', 'LineWidth', 1,'Color', Mycolormap(si,:));
+            lgd(i,si) = plot(xvec(1:end-1)+xinterval/2, Tuning.EtoI(si,:),':', 'LineWidth', .75,'Color', OKeeffe(si,:).^6);
         else
-            lgd(i,si) = plot(xvec(1:end-1)+xinterval/2, Tuning.EtoI(si,:), '-', 'LineWidth', 1,'Color', Mycolormap(si,:));
+            lgd(i,si) = plot(xvec(1:end-1)+xinterval/2, Tuning.EtoI(si,:), '-', 'LineWidth', .75,'Color', OKeeffe(si,:));
         end
     end
 end
-xlabel('I neurons'' location (\mum)');
-ylabel('Effective E to I weights');
+xlabel('Locations of I neurons (\mum)');
+ylabel('Effective weights');
+title('E to I');
+autoy = ylim();
+ylim([autoy(1)-0.1*(range(autoy)),autoy(2)]);
 tmp = flip(lgd, 1);
 legend(tmp(:), legendLabels, 'Location', 'best', 'NumColumns',2);
-mysavefig(h, filename, plotdir, 12, [2.5, 2.5/2], 2);
+mysavefig(h, filename, plotdir, 12, [2.5, 5], 2);
 % I to E connections
-h = figure; hold on;
-filename = 'Effctv_wIE_over_LocationI';
-legendLabels = {'After - Input 1','Before - Input 1', 'After - Input 2','Before - Input 2'};
+subplot(3,1,2); hold on;
 for i = 1:2
     if i == 1
         wIE = Ntwk.wIE_initial;
@@ -130,21 +137,20 @@ for i = 1:2
                 Ntwk.Inhbt.Location(:,1) <= xvec(xi) + xinterval), 'all');
         end
         if i == 1
-            lgd(i,si) = plot(xvec(1:end-1)+xinterval/2, Tuning.ItoE(si,:),'--', 'LineWidth', 1,'Color', Mycolormap(si,:));
+            lgd(i,si) = plot(xvec(1:end-1)+xinterval/2, Tuning.ItoE(si,:),':', 'LineWidth', .75,'Color', OKeeffe(si,:).^6);
         else
-            lgd(i,si) = plot(xvec(1:end-1)+xinterval/2, Tuning.ItoE(si,:), '-', 'LineWidth', 1,'Color', Mycolormap(si,:));
+            lgd(i,si) = plot(xvec(1:end-1)+xinterval/2, Tuning.ItoE(si,:), '-', 'LineWidth', .75,'Color', OKeeffe(si,:));
         end
     end
 end
-xlabel('I neurons'' location (\mum)');
-ylabel('Effective I to E weights');
-tmp = flip(lgd, 1);
-legend(tmp(:), legendLabels, 'Location', 'best', 'NumColumns',2);
-mysavefig(h, filename, plotdir, 12, [2.5, 2.5/2], 2);
+xlabel('Locations of I neurons (\mum)');
+ylabel('Effective weights');
+title('I to E');
+autoy = ylim();
+ylim([autoy(1)-0.1*(range(autoy)),autoy(2)]);
+mysavefig(h, filename, plotdir, 12, [2.5, 5], 2);
 % E to E connections
-h = figure; hold on;
-filename = 'Effctv_wEE_over_LocationE';
-legendLabels = {'After - Input 1','Before - Input 1', 'After - Input 2','Before - Input 2'};
+subplot(3,1,3); hold on;
 for i = 1:2
     if i == 1
         wEE = Ntwk.wEE_initial;
@@ -159,17 +165,18 @@ for i = 1:2
                 Ntwk.Exct.Location(:,1) <= xvec(xi) + xinterval), 'all');
         end
         if i == 1
-            lgd(i,si) = plot(xvec(1:end-1)+xinterval/2, Tuning.EtoE(si,:),'--', 'LineWidth', 1,'Color', Mycolormap(si,:));
+            lgd(i,si) = plot(xvec(1:end-1)+xinterval/2, Tuning.EtoE(si,:),':', 'LineWidth', .75,'Color', OKeeffe(si,:).^6);
         else
-            lgd(i,si) = plot(xvec(1:end-1)+xinterval/2, Tuning.EtoE(si,:), '-', 'LineWidth', 1,'Color', Mycolormap(si,:));
+            lgd(i,si) = plot(xvec(1:end-1)+xinterval/2, Tuning.EtoE(si,:), '-', 'LineWidth', .75,'Color', OKeeffe(si,:));
         end
     end
 end
-xlabel('E neurons'' location (\mum)');
-ylabel('Effective E to E weights');
-tmp = flip(lgd, 1);
-legend(tmp(:), legendLabels, 'Location', 'best', 'NumColumns',2);
-mysavefig(h, filename, plotdir, 12, [2.5, 2.5/2], 2);
+xlabel('Locations of E neurons (\mum)');
+ylabel('Effective weights');
+title('E to E');
+autoy = ylim();
+ylim([autoy(1)-0.1*(range(autoy)),autoy(2)]);
+mysavefig(h, filename, plotdir, 12, [2.5, 5], 2);
 %% Summed tuning of the feedback inhibition, E_to_I * I_to_E
 
 % initial feedback gain control

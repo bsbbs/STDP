@@ -457,10 +457,11 @@ c.Location = 'northoutside';
 xlabel("Exct neurons");
 ylabel("Exct neurons");
 mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
-%%
+%% 
+SynpseDynamics;
 EvalTuning(Ntwk,WEE,WEI,WIE,OKeeffe,plotdir);
-
 %% Save results
 close all;
 clearvars -except 'Ntwk' 'Seq' 'Exmpl' 'WEI' 'WIE' 'WEE' 'Rsltfile';
 save(Rsltfile, 'Ntwk', 'Seq', 'Exmpl', 'WEI', 'WIE', 'WEE', '-v7.3');
+

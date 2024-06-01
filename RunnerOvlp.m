@@ -458,6 +458,7 @@ xlabel("Exct neurons");
 ylabel("Exct neurons");
 mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
 %%
+SynpseDynamics;
 EvalTuning(Ntwk,WEE,WEI,WIE,OKeeffe,plotdir);
 
 %% Save results
