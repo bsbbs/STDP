@@ -16,10 +16,7 @@ else
 end
 
 %% Specify project name and output
-plotdir = fullfile(Projdir, ProjectName);
-if ~exist(plotdir, 'dir')
-    mkdir(plotdir);
-end
+
 Rsltfile = fullfile(plotdir,'Rslts.mat');
 
 %% Inputs of single source, assume this long-range projection only intervenes Exct neurons
