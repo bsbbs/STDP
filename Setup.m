@@ -28,3 +28,9 @@ for i = 1:size(OKeeffe,1)
 end
 mysavefig(h, 'Colorspace', gnrloutdir, 14, [8,3], 0);
 close(h);
+
+if gpuDeviceCount > 0
+    gpuparallel = 1;
+else
+    error("Implementing this code requires GPU");
+end

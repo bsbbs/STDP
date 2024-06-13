@@ -1,47 +1,16 @@
 Ntwkfile = fullfile(gnrloutdir, 'NtwkPrdcGPU.mat');
 if ~exist(Ntwkfile, 'file')
     %% The structure of the network
-    Ntwk.Scale = 500; % um, scale of the micro structure to test, assumed as one dimentional 
+    Ntwk.Scale = 1000; % um, scale of the micro structure to test, assumed as one dimentional 
     Ntwk.Exct.Location = []; % the physical location of excitatory cells
     Ntwk.Exct.N = 8000; % number of the excitarory cells
-    Ntwk.Exct.AxonRange = 130; 
+    Ntwk.Exct.AxonRange = 150; % um, the standard deviation of axon physical connection range for pyramidal neurons
     Ntwk.Inhbt.Location = [];
     Ntwk.Inhbt.N = 2000;
-    Ntwk.Inhbt.AxonRange = 97; % um, the standard deviation of axon physical connection range for interneurons
-    Ntwk.AxonRange.EE = 130; % um, standard deviation of Gaussian decay of connection probability over somatic distance of E and E
-    Ntwk.AxonRange.EI = 100; % um, standard deviation of Gaussian decay of connection probability over somatic distance of E and I 
-    Ntwk.AxonRange.IE = 97; % um, standard deviation of Gaussian decay of connection probability over somatic distance of I and E 
-    Ntwk.CnnctProb.EE = .1; % the maximum connection probabability from E to E
-    Ntwk.CnnctProb.EI = .2; % the maximum connection probabability from E to I
-    Ntwk.CnnctProb.IE = .3; % the maximum connection probabability from I to E
+    Ntwk.Inhbt.AxonRange = 50; % um, the standard deviation of axon physical connection range for interneurons
     Ntwk.Smpl.E = 3999;
     Ntwk.Smpl.I = 1000;
-    %% define LIF model parameters
-    Ntwk.VL = -70; % mV, resting potential
-    Ntwk.Vth = -50; % mV, threshold potential (Wang 2002; Vogels et al., 2011)
-    Ntwk.Vfire = Ntwk.Vth; % mV, spiking peak potential
-    Ntwk.Vreset = -60; % mV, reset potential (Vogels, 2011)
-    Ntwk.VE = 0; % mV, excitatory synaptic potential
-    Ntwk.VI = -80; % mV, inhibitory synaptic potential (Vogels et al., 2011; Burkitt et al., 2004)
-    Ntwk.Exct.Cm = .5*1000; % nF (multiplied 1000 to match the scale of ms), membrane capacity for pyramidal neurons (Wang 2002)
-    Ntwk.Inhbt.Cm = .2*1000; % nF (multiplied 1000 to match the scale of ms), membrane capacity for interneurons (Wang 2002)
-    Ntwk.Exct.gL = 25; % nS, membrane leaky conductance for pyramidal neurons (Wang 2002)
-    Ntwk.Inhbt.gL = 20; % nS, membrane leaky conductance for interneurons (Wang 2002)
-    Ntwk.Exct.taum = Ntwk.Exct.Cm/Ntwk.Exct.gL; % 20 ms, membrane time constant of pyramidal neurons (Wang, 2002; Vogels et al., 2011; Burkitt et al., 2004)
-    Ntwk.Inhbt.taum = Ntwk.Inhbt.Cm/Ntwk.Inhbt.gL; % 10 ms, membrane time constant of interneurons (Wang 2002)
-    Ntwk.Exct.tauREF = 2; % ms, refractory period for pyramidal neurons (Wang 2002)
-    Ntwk.Inhbt.tauREF = 1; % ms, refractory period for interneurons (Wang 2002)
-    Ntwk.Delay.EE = 1.7; % ms, delay of presynaptic action potential to the PSP response onset (Campagnola et al., 2022am)
-    Ntwk.Delay.EI = 1.3; % ms
-    Ntwk.Delay.IE = 1; % ms
-    Ntwk.Synapse.tauExct = 5; % ms, the decay time constant of EPSC, like AMPA (Destexhe et al., 1994; Gabbiani et al., 1994)
-    Ntwk.Synapse.tauInhbt = 6; % ms, the decay time constant of IPSC, like GABAa (Destexhe & Paré, 1999)
-    % rising time of those synapses were assumed as instant
-    Ntwk.Synapse.gbarE = .140; % nS, the maximum excitatory synaptic conductance, like AMPA (Vogels et al., 2011)
-    Ntwk.Synapse.gbarI = .350; % nS, the maximum inhibitory synaptic conductance, like GABA (Vogels et al., 2011)
-    Ntwk.Synapse.gbarE = 4.7; % original value .14 nS
-    Ntwk.Synapse.gbarI = 31.5; % original value .35 nS
-    %% Spike-timing dependent plasticity
+    %% Plasticity kernel
     % time constant of synaptic plasticity for pre-post and post-pre kernels
     Ntwk.A = .001; % the maximum amplitude change on the synapctic plasticity for each pair of spikes
     Ntwk.Synapse.tau_prepost = 20; % ms
@@ -61,6 +30,26 @@ if ~exist(Ntwkfile, 'file')
     Ntwk.InhbtSTDP.rho = 5; % Hz, depression constant
     Ntwk.InhbtSTDP.intercept_pre = -2*Ntwk.InhbtSTDP.rho/1000*Ntwk.InhbtSTDP.tau_prepost; % depression if no post spikes
     Ntwk.InhbtSTDP.intercept_post = 0; % depression if no pre spikes
+    %% define LIF model parameters
+    Ntwk.VL = -60; % mV, resting potential
+    Ntwk.Vth = -50; % mV, threshold potential (Wang 2002; Vogels et al., 2011)
+    Ntwk.Vfire = 10; % mV, spiking peak potential
+    Ntwk.Vreset = -55; % mV, reset potential (Wang 2002)
+    Ntwk.VE = 0; % mV, excitatory synaptic potential
+    Ntwk.VI = -80; % mV, inhibitory synaptic potential (Vogels et al., 2011; Burkitt et al., 2004)
+    Ntwk.Exct.Cm = .5*1000; % nF (multiplied 1000 to match the scale of ms), membrane capacity for pyramidal neurons (Wang 2002)
+    Ntwk.Inhbt.Cm = .2*1000; % nF (multiplied 1000 to match the scale of ms), membrane capacity for interneurons (Wang 2002)
+    Ntwk.Exct.gL = 25; % nS, membrane leaky conductance for pyramidal neurons (Wang 2002)
+    Ntwk.Inhbt.gL = 20; % nS, membrane leaky conductance for interneurons (Wang 2002)
+    Ntwk.Exct.taum = Ntwk.Exct.Cm/Ntwk.Exct.gL; % 20 ms, membrane time constant of pyramidal neurons (Wang, 2002; Vogels et al., 2011; Burkitt et al., 2004)
+    Ntwk.Inhbt.taum = Ntwk.Inhbt.Cm/Ntwk.Inhbt.gL; % 10 ms, membrane time constant of interneurons (Wang 2002)
+    Ntwk.Exct.tauREF = 2; % ms, refractory period for pyramidal neurons (Wang 2002)
+    Ntwk.Inhbt.tauREF = 1; % ms, refractory period for interneurons (Wang 2002)
+    Ntwk.Synapse.tauExct = 5; % 2; % ms, the decay time constant of EPSC, e.g., AMPAa (Wang 2002)
+    Ntwk.Synapse.tauInhbt = 10; % 5; % ms, the decay time constant of IPSC, e.g., GABA (Wang 2002)
+    Ntwk.Synapse.gbarE = .140; % nS, the maximum excitatory synaptic conductance, e.g., AMPAa (Vogels et al., 2011)
+    Ntwk.Synapse.gbarI = .350; % nS, the maximum inhibitory synaptic conductance, e.g., GABA (Vogels et al., 2011)
+
     %% Other parameters
     Ntwk.Noise.tauN = 2; % ms, time constant for the OU process of noise
     Ntwk.Noise.sgm = 10; % amplitude of noise
@@ -90,7 +79,7 @@ if ~exist(Ntwkfile, 'file')
     [XE, XI] = meshgrid(Ntwk.Exct.Location(:,1), Ntwk.Inhbt.Location(:,1)); % rows represent Inhbt and columns represent Exct
     [YE, YI] = meshgrid(Ntwk.Exct.Location(:,2), Ntwk.Inhbt.Location(:,2));
     DstcEI = sqrt(min(Ntwk.Scale*2-abs(XE - XI), abs(XE - XI)).^2 + min(Ntwk.Scale - abs(YE - YI), abs(YE - YI)).^2); % Euclidean distance between each pair of Exct and Inhbt neurons
-    p_EI = Ntwk.CnnctProb.EI*exp(-.5*(DstcEI/Ntwk.AxonRange.EI).^2); %1 - (1 - exp(-DstcEI/Ntwk.Exct.AxonRange)).^4; % probability of physical connection from E to I based on distance
+    p_EI = exp(-.5*(DstcEI/Ntwk.Exct.AxonRange).^2); %1 - (1 - exp(-DstcEI/Ntwk.Exct.AxonRange)).^4; % probability of physical connection from E to I based on distance
     gpurng(randomseed);
     Ntwk.Cnnct_EI = p_EI >= gpuArray.rand(size(p_EI)); % connections from E to I, 0 or 1
     clear XE XI YE YI DstcEI p_EI;
@@ -98,7 +87,7 @@ if ~exist(Ntwkfile, 'file')
     [XI, XE] = meshgrid(Ntwk.Inhbt.Location(:,1), Ntwk.Exct.Location(:,1)); % rows represent Exct and columns represent Inhbt
     [YI, YE] = meshgrid(Ntwk.Inhbt.Location(:,2), Ntwk.Exct.Location(:,2));
     DstcIE = sqrt(min(Ntwk.Scale*2-abs(XI - XE), abs(XI - XE)).^2 + min(Ntwk.Scale - abs(YI - YE), abs(YI - YE)).^2); % Euclidean distance between each pair of Inhbt and Exct neurons
-    p_IE = Ntwk.CnnctProb.IE*exp(-.5*(DstcIE/Ntwk.AxonRange.IE).^2); % probability of connection from I to E based on distance
+    p_IE = exp(-.5*(DstcIE/Ntwk.Inhbt.AxonRange).^2); % probability of connection from I to E based on distance
     gpurng(randomseed);
     Ntwk.Cnnct_IE = p_IE >= gpuArray.rand(size(p_IE)); % connections from I to E, 0 or 1
     clear XE XI YE YI DstcIE p_IE;
@@ -106,7 +95,7 @@ if ~exist(Ntwkfile, 'file')
     [XE1, XE2] = meshgrid(Ntwk.Exct.Location(:,1), Ntwk.Exct.Location(:,1));
     [YE1, YE2] = meshgrid(Ntwk.Exct.Location(:,2), Ntwk.Exct.Location(:,2));
     DstcEE = sqrt(min(Ntwk.Scale*2-abs(XE1 - XE2), abs(XE1 - XE2)).^2 + min(Ntwk.Scale - abs(YE1 - YE2), abs(YE1 - YE2)).^2); %  Euclidean distance between each pair of Exct neurons
-    p_EE = Ntwk.CnnctProb.EE*exp(-.5*(DstcEE/Ntwk.AxonRange.EE).^2); % probability of connection from E to E based on distance
+    p_EE = exp(-.5*(DstcEE/Ntwk.Exct.AxonRange).^2); % probability of connection from E to E based on distance
     gpurng(randomseed);
     Ntwk.Cnnct_EE = p_EE >= gpuArray.rand(size(p_EE)); % connections from E to E, 0 or 1
     clear XE1 XE2 YE1 YE2 DstcEE p_EE;
