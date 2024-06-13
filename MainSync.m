@@ -21,10 +21,11 @@ if ~exist(Seqfile, 'file')
     duration = length(Seq)*dt; % ms
     time = [dt:dt:duration]';
     timesteps = numel(time);
-    save(Seqfile, 'Seq','evs','values','time','timesteps');
+    save(Seqfile, 'Seq','evs','values','time','duration','timesteps');
 else
     load(Seqfile);
 end
+duration = length(Seq)*dt; % ms
 h = figure;
 filename = 'InputDynamic';
 subplot(3,1,1); hold on;
@@ -34,7 +35,7 @@ end
 title('Input signal');
 xlabel('Time (s)');
 ylabel('Channel');
-axis([0 duration/1000 .5, 2*1.45]); % Adjust the axis for better visualization
+axis([0, time(end)/1000, .5, 2*1.45]); % Adjust the axis for better visualization
 % ylim([.5, Ntwk.Input.Source*1.45]);
 yticks([1:2]);
 %close(h);
