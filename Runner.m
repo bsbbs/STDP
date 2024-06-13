@@ -117,7 +117,7 @@ for t = 1:(timesteps-1)
     % Synaptic activities
     ExctgE = ExctgE - ExctgE/Ntwk.Synapse.tauExct*dt; % excitatory synaptic conductance on Exct neurons
     if any(InputSpikes)
-        ExctgE = ExctgE + Ntwk.Synapse.gbarE*Ntwk.Cnnct_Input*InputSpikes;
+        ExctgE = ExctgE + Ntwk.Synapse.gbarE*Ntwk.Cnnct_Input.*Ntwk.wInput*InputSpikes;
     end
     DlyEspikes = SpkTrnE(2:end,SpkTrnE(1,:) == t - Ntwk.Delay.EE/dt);
     if ~isempty(DlyEspikes)
