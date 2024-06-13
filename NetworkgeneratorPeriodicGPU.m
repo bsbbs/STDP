@@ -148,9 +148,9 @@ if ~exist(Ntwkfile, 'file')
     %% Synaptic weights for those possible connections defined above
     % initial weights
     gpurng(randomseed);
-    Ntwk.wEI_initial = .1*gpuArray.rand(size(Ntwk.Cnnct_EI)).*Ntwk.Cnnct_EI; % synaptic weight from E to I, weak initial connections from E to I
-    Ntwk.wIE_initial = .1*gpuArray.rand(size(Ntwk.Cnnct_IE)).*Ntwk.Cnnct_IE; % synaptic weight from I to E, weak initial connections from the nearby SST
-    Ntwk.wEE_initial = .1*gpuArray.rand(size(Ntwk.Cnnct_EE)).*Ntwk.Cnnct_EE; % synaptic weight from E to E, weak initial connections of self-excitation
+    Ntwk.wEI_initial = .01*gpuArray.rand(size(Ntwk.Cnnct_EI)).*Ntwk.Cnnct_EI; % synaptic weight from E to I, weak initial connections from E to I
+    Ntwk.wIE_initial = .01*gpuArray.rand(size(Ntwk.Cnnct_IE)).*Ntwk.Cnnct_IE; % synaptic weight from I to E, weak initial connections from the nearby SST
+    Ntwk.wEE_initial = .01*gpuArray.rand(size(Ntwk.Cnnct_EE)).*Ntwk.Cnnct_EE; % synaptic weight from E to E, weak initial connections of self-excitation
     %% visualization
     if show
         h = figure;
