@@ -22,10 +22,10 @@ values = [x, y];
 % disp('First few rows of the multivariate Pareto distributions:');
 % disp(table(x(1:5), y(1:5)));
 
-% Plot the data
-figure;
-scatter(x, y, 'filled');
-title('Multivariate Pareto Distributions');
-xlabel('X');
-ylabel('Y');
-grid on;
+% % Plot the data
+% figure;
+% scatter(x, y, 'filled');
+% title('Multivariate Pareto Distributions');
+% xlabel('X');
+% ylabel('Y');
+% grid on;

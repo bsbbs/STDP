@@ -83,3 +83,47 @@ legend(lg, {'Excitatory to E','Inhibitory to E','Excitatory to I'});
 ylabel('Membrane potential');
 ylabel('Time (ms)');
 mysavefig(h, filename, plotdir, 12, [2, 2], 1);
+
+%% Connection probability
+Distance = 0:200;
+Ntwk.AxonRange.EE = 130; % um, standard deviation of Gaussian decay of connection probability over somatic distance of E and E
+Ntwk.AxonRange.EI = 100; % um, standard deviation of Gaussian decay of connection probability over somatic distance of E and I
+Ntwk.AxonRange.IE = 97; % um, standard deviation of Gaussian decay of connection probability over somatic distance of I and E
+Ntwk.CnnctProb.EE = .1; % the maximum connection probabability from E to E
+Ntwk.CnnctProb.EI = .2; % the maximum connection probabability from E to I
+Ntwk.CnnctProb.IE = .3; % the maximum connection probabability from I to E
+
+
+%% Single spike
+plotdir = 'C:\Users\Bo\Documents\STDP_Project\Sync_1600';
+load(fullfile(plotdir, 'RealtimeMonitor_Event1.mat'));
+%%
+h = figure; hold on;
+filename = 'LIF_demo_AP';
+plot(timevec,Smpl.ExctV(:,1), 'k-');
+ylim([-70, -45]);
+xlim([1140, 1250]);
+xticks([1150:50:1250]);
+xticklabels({'0','50','100'});
+ylabel('Membrane potential (mV)');
+xlabel('Time (ms)');
+plot(timevec,Smpl.InhbtV(:,1), 'r-');
+mysavefig(h, filename, plotdir, 12, [2, 1.6], 1);
+%% Input sequences
+load(fullfile(plotdir, 'Seq.mat'));
+leftt = evs(120,1);
+rightt = evs(130,1);
+Ntwk.Input.Source = 2;
+h = figure;
+filename = 'InputSequences';
+subplot(3,1,1); hold on;
+for ii = Ntwk.Input.Source:-1:1
+    plot(time/1000, Seq(:,ii)*.9+(ii), '-', "Color", OKeeffe(ii,:), 'LineWidth', 1);
+end
+title('Input signal');
+xlabel('Time (ms)');
+ylabel('Channel');
+axis([leftt-.5 rightt+.5 .5, Ntwk.Input.Source*1.45]); % Adjust the axis for better visualization
+% ylim([.5, Ntwk.Input.Source*1.45]);
+yticks([1:Ntwk.Input.Source]);
+mysavefig(h, filename, plotdir, 12, [3,6], 1);
