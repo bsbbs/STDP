@@ -47,7 +47,7 @@ InhbtNosie = Ib + gpuArray.randn(Ntwk.Inhbt.N,1)*Ntwk.Noise.sgm; % OU noise on i
 % Dynamic variables of the example neurons
 smplintrvl = .1; % ms
 smplonsets = round(evs(round(linspace(1,numel(evs(:,1)),18)),1)*1000/dt);
-display(smplonsets);
+display(smplonsets*dt/1000);
 smplsteps = (500+200)/smplintrvl;
 smplE = Ntwk.Smpl.E; % E1, E2, EShare1, EShare2
 smplI = Ntwk.Smpl.I; % I1, I2, IShare
