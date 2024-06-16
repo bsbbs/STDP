@@ -46,7 +46,8 @@ ExctNoise = Ib + gpuArray.randn(Ntwk.Exct.N,1)*Ntwk.Noise.sgm; % OU noise on exc
 InhbtNosie = Ib + gpuArray.randn(Ntwk.Inhbt.N,1)*Ntwk.Noise.sgm; % OU noise on inhibitory neurons
 % Dynamic variables of the example neurons
 smplintrvl = .1; % ms
-smplonsets = round(evs(round(linspace(1,numel(evs(:,1)),9)),1)*1000/dt);
+smplonsets = round(evs(round(linspace(1,numel(evs(:,1)),18)),1)*1000/dt);
+display(smplonsets);
 smplsteps = (500+200)/smplintrvl;
 smplE = Ntwk.Smpl.E; % E1, E2, EShare1, EShare2
 smplI = Ntwk.Smpl.I; % I1, I2, IShare
@@ -129,7 +130,7 @@ for t = 1:(timesteps-1)
         ExctgI = ExctgI + Ntwk.Synapse.gbarI*Ntwk.Cnnct_IE.*WIE*DlyIspikes;
     end
     InhbtgE = InhbtgE - InhbtgE/Ntwk.Synapse.tauExct*dt; % excitatory synaptic conductance on Inhbt neurons
-    DlyEspikes = SpkTrnE(2:end,SpkTrnE(1,:) == t - Ntwk.Delay.EE/dt);
+    DlyEspikes = SpkTrnE(2:end,SpkTrnE(1,:) == t - Ntwk.Delay.EI/dt);
     if ~isempty(DlyEspikes)
         InhbtgE = InhbtgE + Ntwk.Synapse.gbarE*(Ntwk.Cnnct_EI.*WEI*DlyEspikes);
     end
