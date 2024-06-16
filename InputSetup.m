@@ -26,7 +26,7 @@ clear xE yE Origins r phi I;
 [YInput, YE] = meshgrid(Ntwk.Input.Location(:,2), Ntwk.Exct.Location(:,2));
 DstcInput = sqrt(min(Ntwk.Scale*2 - abs(XInput - XE), abs(XInput - XE)).^2 + min(Ntwk.Scale - abs(YInput - YE), abs(YInput - YE)).^2); % Euclidean distance between each pair of neurons
 p_Input = Ntwk.CnnctProb.Input*exp(-.5*(DstcInput/Ntwk.AxonRange.Input).^2); % probability of physical connection based on distance
-gpurng(2024);
+gpurng(2026);
 Ntwk.Cnnct_Input = p_Input >= gpuArray.rand(size(p_Input)); % projections from input, 0 or 1
 Ntwk.wInput = .3*gpuArray.rand(size(Ntwk.Cnnct_Input)).*Ntwk.Cnnct_Input;
 clear XInput YInput XE YE DstcInput p_Input;

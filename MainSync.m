@@ -11,7 +11,6 @@ if ~exist(plotdir,'dir')
 end
 Seqfile = fullfile(plotdir, 'Seq.mat');
 if ~exist(Seqfile, 'file')
-    rng(29);
     % sigma = 0;
     % values = ParetoSequence(Ntrial, sigma);
     values = ones(Ntrial,2);
