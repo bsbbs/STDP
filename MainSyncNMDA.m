@@ -1,6 +1,6 @@
 %% define I/O
 DefineIO;
-%% Define time vector, check input sequences
+% Define time vector, check input sequences
 dt = .1; % ms, time precision for simulation, in unit of second
 % Spike train of the input, example trials
 Ntrial = 1600;
@@ -38,6 +38,6 @@ axis([0, time(end)/1000, .5, 2*1.45]); % Adjust the axis for better visualizatio
 % ylim([.5, Ntwk.Input.Source*1.45]);
 yticks([1:2]);
 %close(h);
-%% runner
+% runner
 RunnerNMDA;
 

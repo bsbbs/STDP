@@ -8,7 +8,7 @@ elseif strcmp(os,'GLNXA64')
     Projdir = '/scratch/bs3667/STDP_Project';
     Gitdir = '/home/bs3667/STDP';
 elseif strcmp(os, 'PCWIN64')
-    Projdir = 'C:\Users\Bo\Documents\STDP_Project';
+    Projdir = 'C:\Users\Bo\NYU Langone Health Dropbox\Shen Bo\Bo Shen Working files\STDP_Project';
     Gitdir = 'C:\Users\Bo\Documents\GitHub\STDP';
 end
 gnrloutdir = fullfile(Projdir, 'General');
