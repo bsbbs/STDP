@@ -34,10 +34,12 @@ if ~exist(Ntwkfile, 'file')
     Ntwk.Delay.IE = 1; % ms
     Ntwk.Synapse.tauExct = 5; % ms, the decay time constant of EPSC, like AMPA (Destexhe et al., 1994; Gabbiani et al., 1994)
     Ntwk.Synapse.tauInhbt = 6; % ms, the decay time constant of IPSC, like GABAa (Destexhe & Paré, 1999)
+    Ntwk.Synapse.tauNMDA.rise = 3; % ms
+    Ntwk.Synapse.tauNMDA.decay = 100; % ms
     % rising time of those synapses were assumed as instant
     Ntwk.Synapse.gbarE = .140; % nS, the maximum excitatory synaptic conductance, like AMPA (Vogels et al., 2011)
     Ntwk.Synapse.gbarI = .350; % nS, the maximum inhibitory synaptic conductance, like GABA (Vogels et al., 2011)
-    Ntwk.Synapse.gbarE = 4.7; % original value .14 nS
+    Ntwk.Synapse.gbarE = 3.75; % 4.7; % original value .14 nS
     Ntwk.Synapse.gbarI = 31.5; % original value .35 nS
     %% Spike-timing dependent plasticity
     % time constant of synaptic plasticity for pre-post and post-pre kernels

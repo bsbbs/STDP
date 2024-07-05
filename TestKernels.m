@@ -5,7 +5,7 @@ dur = 100; % ms
 timevec = [dt:dt:dur]';
 tsteps = numel(timevec);
 
-Ntwk.Synapse.gbarE = 4.7; % original value .14 nS
+Ntwk.Synapse.gbarE = 3.75; % original value .14 nS
 Ntwk.Synapse.gbarI = 31.5; % original value .35 nS
 ExctV = Ntwk.VL;
 ExctV2 = Ntwk.VL;
@@ -20,6 +20,8 @@ ExctgE = 0;
 ExctgI = 0;
 InhbtgE = 0;
 InhbtgI = 0;
+x = 0;
+gNMDA = 0;
 Output = [];
 for t = 1:tsteps
     % input spikes
@@ -39,9 +41,15 @@ for t = 1:tsteps
         + Ntwk.Synapse.gbarI*InputSpikes;
     InhbtgE = InhbtgE - InhbtgE/Ntwk.Synapse.tauExct*dt ... % excitatory synaptic conductance on Inhbt neurons
         + Ntwk.Synapse.gbarE*InputSpikes;
-
+    dx = (-x/Ntwk.Synapse.tauNMDA.rise)*dt + Ntwk.Synapse.gbarE/18*InputSpikes;
+    x = x + dx;
+    x(x < 0) = 0;
+    dgNMDA = (-gNMDA/Ntwk.Synapse.tauNMDA.decay + x)*dt;
+    gNMDA = gNMDA + dgNMDA;
+    gNMDA(gNMDA < 0) = 0;
+    
     % Membrane potential change for Exct neurons receiving excitatory input
-    dV = (Ntwk.Exct.gL*(Ntwk.VL - ExctV) + ExctgE.*(Ntwk.VE - ExctV))/Ntwk.Exct.Cm*dt;
+    dV = (Ntwk.Exct.gL*(Ntwk.VL - ExctV) + (ExctgE + gNMDA).*(Ntwk.VE - ExctV))/Ntwk.Exct.Cm*dt;
     ExctV = ExctV + dV;
     ExctV(ExctRefraction>0) = Ntwk.Vreset;
     ExctRefraction = ExctRefraction - 1;
@@ -61,7 +69,7 @@ for t = 1:tsteps
     ExctRefraction2(Espikes2) = refractionPeriod.E;
     
     % Membrane potential change for Inhbt neurons
-    dV = (Ntwk.Inhbt.gL*(Ntwk.VL - InhbtV) + InhbtgE.*(Ntwk.VE - InhbtV))/Ntwk.Inhbt.Cm*dt;
+    dV = (Ntwk.Inhbt.gL*(Ntwk.VL - InhbtV) + (InhbtgE + gNMDA).*(Ntwk.VE - InhbtV))/Ntwk.Inhbt.Cm*dt;
     InhbtV = InhbtV + dV;
     InhbtV(InhbtRefraction>0) = Ntwk.Vreset;
     InhbtRefraction = InhbtRefraction - 1;
@@ -81,7 +89,7 @@ lg(2) = plot(timevec, Output(:,2), 'k--', 'LineWidth',1);
 lg(3) = plot(timevec, Output(:,3), 'r-', 'LineWidth',1);
 legend(lg, {'Excitatory to E','Inhibitory to E','Excitatory to I'});
 ylabel('Membrane potential');
-ylabel('Time (ms)');
+xlabel('Time (ms)');
 mysavefig(h, filename, plotdir, 12, [2, 2], 1);
 
 %% Connection probability
@@ -127,3 +135,39 @@ axis([leftt-.5 rightt+.5 .5, Ntwk.Input.Source*1.45]); % Adjust the axis for bet
 % ylim([.5, Ntwk.Input.Source*1.45]);
 yticks([1:Ntwk.Input.Source]);
 mysavefig(h, filename, plotdir, 12, [3,6], 1);
+%% Dynamics of NMDA receptors
+% rising and decay captured by two coupled linear differentail equations (Wilson and Bower, 1989; Destexhe et al. 1994)
+Ntwk.Synapse.tauNMDA.rise = 3; % ms
+Ntwk.Synapse.tauNMDA.decay = 100; % ms
+dt = .1; % ms, time precision for simulation, in unit of second
+dur = 100; % ms
+% Time vector
+timevec = [dt:dt:dur]';
+tsteps = numel(timevec);
+gNMDA = 0;
+x = 0; % the intermediate variable for the double exponential implementation
+Output = [];
+for t = 1:tsteps
+    % input spikes
+    if t*dt == 5
+        InputSpikes = 1;
+    else
+        InputSpikes = 0;
+    end
+    dx = (-x/Ntwk.Synapse.tauNMDA.rise)*dt + Ntwk.Synapse.gbarE*InputSpikes;
+    x = x + dx;
+    x(x < 0) = 0;
+    dgNMDA = (-gNMDA/Ntwk.Synapse.tauNMDA.decay + x)*dt;
+    gNMDA = gNMDA + dgNMDA;
+    gNMDA(gNMDA < 0) = 0;
+    Output(t,:) = [gNMDA, x]; 
+end
+h = figure; hold on;
+filename = 'NMDA_DoubleExpo';
+lg = [];
+lg(1) = plot(timevec, Output(:,1), 'k-', 'LineWidth',1);
+lg(2) = plot(timevec, Output(:,2), 'k--', 'LineWidth',1);
+legend(lg, {'gNMDA','x'});
+ylabel('Activities');
+xlabel('Time (ms)');
+mysavefig(h, filename, plotdir, 12, [2, 2], 1);
