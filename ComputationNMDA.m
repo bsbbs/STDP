@@ -102,7 +102,7 @@ mysavefig(h, filename, plotdirintersect, 12, [5, 3], 0);
 % yticks([1:2]);
 % mysavefig(h, filename, plotdir, 12, [4,2], .1);
 
-duration = 40000*dt; % ms
+duration = 12000*dt; % ms
 time = [dt:dt:duration]';
 timesteps = numel(time);
 %% test the network
@@ -138,6 +138,14 @@ InhbtNosie = Ib + gpuArray.randn(Ntwk.Inhbt.N,1)*Ntwk.Noise.sgm; % OU noise on i
 bankwidth = max([Ntwk.Delay.EE, Ntwk.Delay.EE, Ntwk.Delay.IE])/dt;
 SpkTrnE = nan(Ntwk.Exct.N+1,bankwidth); tickE = 0;
 SpkTrnI = nan(Ntwk.Inhbt.N+1,bankwidth); tickI = 0;
+h1 = figure; hold on;
+filename = sprintf('RealtimeMonitor_Event%i', evi);
+xlabel('Time (ms)');
+ylabel('Neurons');
+ylim([1, Ntwk.Exct.N]);
+title('Raster plot of Exct/Inhbt neurons');
+ExctVec = 1:Ntwk.Exct.N;
+InhbtVec = [1:Ntwk.Inhbt.N]*4;
 % Output variables
 MeanFR = [];
 timevec = [];
@@ -146,7 +154,7 @@ for t = 1:(timesteps-1)
     InputSpikes = gpuArray.rand(Ntwk.Input.N,1);
     % InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < spikeProbability*Seq(t,1);
     % InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < spikeProbability*Seq(t,2);
-    if t*dt <= 2000
+    if t*dt <= 1000
         InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < Ntwk.Input.spikeProbability*1;
         InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < Ntwk.Input.spikeProbability*0;
     else
@@ -233,6 +241,8 @@ for t = 1:(timesteps-1)
     InhbtV(Ispikes) = Ntwk.Vfire;
     InhbtRefraction(Ispikes) = refractionPeriod.I;
 
+    plot(time(t)*ones(sum(Espikes),1), ExctVec(Espikes), 'k.', 'MarkerSize', 2);
+    plot(time(t)*ones(sum(Ispikes),1), InhbtVec(Ispikes), 'r.', 'MarkerSize', 3);
     % Example traces
     MeanFR(t, 1) = sum(Espikes(TuneMask1))/sum(TuneMask1);
     MeanFR(t, 2) = sum(Espikes(TuneMask2))/sum(TuneMask2);
@@ -282,12 +292,14 @@ for t = 1:(timesteps-1)
     end
 end
 fprintf('Successfully completed\n');
+mysavefig(h1, filename, plotdirintersect, 12, [4, 4], 1);
+savefig(h1, fullfile(plotdirintersect,filename));
 %
 h = figure; hold on;
-filename = 'MeanFRDynmc';
+filename = 'MeanFRDynmc102';
 [FR, timep] = PSTH(MeanFR, dt);
 plot(timep, FR(:,1),'-', 'Color', OKeeffe(1,:), 'LineWidth', 2);
 plot(timep, FR(:,2),'-', 'Color', OKeeffe(2,:), 'LineWidth', 2);
 xlabel('Time (ms)');
 ylabel('Firing rate (Hz)');
-mysavefig(h, filename, plotdirintersect, 12, [4,2], 1);
+mysavefig(h, filename, plotdirintersect, 12, [4, 2], 1);
