@@ -34,12 +34,15 @@ if ~exist(Ntwkfile, 'file')
     Ntwk.Delay.IE = 1; % ms
     Ntwk.Synapse.tauExct = 5; % ms, the decay time constant of EPSC, like AMPA (Destexhe et al., 1994; Gabbiani et al., 1994)
     Ntwk.Synapse.tauInhbt = 6; % ms, the decay time constant of IPSC, like GABAa (Destexhe & Paré, 1999)
-    Ntwk.Synapse.tauNMDA.rise = 3; % ms
-    Ntwk.Synapse.tauNMDA.decay = 100; % ms
+    Ntwk.Synapse.NMDA.taurise = 2; % ms, Feldmeyer et al., 2002
+    Ntwk.Synapse.NMDA.taudecay = 26; % Feldmeyer et al., 2002
+    Ntwk.Synapse.NMDA.a = 0.062; % mV-1
+    Ntwk.Synapse.NMDA.b = 3.57; % mM
+    Ntwk.Synapse.NMDA.Mg2 = 1; % nM
     % rising time of those synapses were assumed as instant
-    Ntwk.Synapse.gbarE = .140; % nS, the maximum excitatory synaptic conductance, like AMPA (Vogels et al., 2011)
-    Ntwk.Synapse.gbarI = .350; % nS, the maximum inhibitory synaptic conductance, like GABA (Vogels et al., 2011)
-    Ntwk.Synapse.gbarE = 3.75; % 4.7; % original value .14 nS
+    % Ntwk.Synapse.gbarE = .140; % nS, the maximum excitatory synaptic conductance, like AMPA (Vogels et al., 2011)
+    % Ntwk.Synapse.gbarI = .350; % nS, the maximum inhibitory synaptic conductance, like GABA (Vogels et al., 2011)
+    Ntwk.Synapse.gbarE = 3.25; % original value .14 nS
     Ntwk.Synapse.gbarI = 31.5; % original value .35 nS
     %% Spike-timing dependent plasticity
     % time constant of synaptic plasticity for pre-post and post-pre kernels
@@ -149,9 +152,9 @@ if ~exist(Ntwkfile, 'file')
     %% Synaptic weights for those possible connections defined above
     % initial weights
     gpurng(2010);
-    Ntwk.wEI_initial = .0005*gpuArray.rand(size(Ntwk.Cnnct_EI)).*Ntwk.Cnnct_EI; % synaptic weight from E to I, weak initial connections from E to I
-    Ntwk.wIE_initial = .0005*gpuArray.rand(size(Ntwk.Cnnct_IE)).*Ntwk.Cnnct_IE; % synaptic weight from I to E, weak initial connections from the nearby SST
-    Ntwk.wEE_initial = .0005*gpuArray.rand(size(Ntwk.Cnnct_EE)).*Ntwk.Cnnct_EE; % synaptic weight from E to E, weak initial connections of self-excitation
+    Ntwk.wEI_initial = .05*gpuArray.rand(size(Ntwk.Cnnct_EI)).*Ntwk.Cnnct_EI; % synaptic weight from E to I, weak initial connections from E to I
+    Ntwk.wIE_initial = .05*gpuArray.rand(size(Ntwk.Cnnct_IE)).*Ntwk.Cnnct_IE; % synaptic weight from I to E, weak initial connections from the nearby SST
+    Ntwk.wEE_initial = .05*gpuArray.rand(size(Ntwk.Cnnct_EE)).*Ntwk.Cnnct_EE; % synaptic weight from E to E, weak initial connections of self-excitation
     %% visualization
     if show
         h = figure;

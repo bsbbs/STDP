@@ -4,7 +4,7 @@ DefineIO;
 dt = .1; % ms, time precision for simulation, in unit of second
 % Spike train of the input, example trials
 Ntrial = 1600;
-ProjectName = sprintf('SyncNMDA_%i', Ntrial);
+ProjectName = sprintf('SyncNMDA2_%i', Ntrial);
 plotdir = fullfile(Projdir, ProjectName);
 if ~exist(plotdir,'dir')
     mkdir(plotdir);

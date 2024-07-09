@@ -28,7 +28,7 @@ DstcInput = sqrt(min(Ntwk.Scale*2 - abs(XInput - XE), abs(XInput - XE)).^2 + min
 p_Input = Ntwk.CnnctProb.Input*exp(-.5*(DstcInput/Ntwk.AxonRange.Input).^2); % probability of physical connection based on distance
 gpurng(2026);
 Ntwk.Cnnct_Input = p_Input >= gpuArray.rand(size(p_Input)); % projections from input, 0 or 1
-Ntwk.wInput = .05*gpuArray.rand(size(Ntwk.Cnnct_Input)).*Ntwk.Cnnct_Input;
+Ntwk.wInput = .3*gpuArray.rand(size(Ntwk.Cnnct_Input)).*Ntwk.Cnnct_Input;
 clear XInput YInput XE YE DstcInput p_Input;
 if show
     Ntwk = InputTuning(Ntwk, OKeeffe, plotdir);
@@ -53,7 +53,7 @@ spikeRate = 100/1000; % spikes per milisecond
 % Generate Poisson distributed spikes
 % The probability of a spike in each time bin
 spikeProbability = spikeRate * dt;
-
+Ntwk.Input.spikeProbability = spikeProbability;
 % Poisson generator: generate random numbers and compare to spike probability
 leftt = floor(min(find(Seq(:,1)>0, 1 ), find(Seq(:,2)>0, 1 )*dt)/100)*100;
 rightt = ceil((max(find(Seq(:,1)>0, 1 ), find(Seq(:,2)>0, 1 ))*dt+500)/100)*100;
@@ -88,3 +88,4 @@ title('Spike train');
 axis([leftt rightt 0.5 Ntwk.Input.N+0.5]); % Adjust the axis for better visualization
 mysavefig(h, filename, plotdir, 12, [3,6], 1);
 clear InputSpikes spikeTimes spikeIndices SumStrength;
+save(fullfile(plotdir, 'Ntwk.mat'), "Ntwk");

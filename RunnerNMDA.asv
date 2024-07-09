@@ -130,7 +130,7 @@ for t = 1:(timesteps-1)
     % AMPA and NMDA on Excitatory neurons
     ExctgAMPA = ExctgAMPA - ExctgAMPA/Ntwk.Synapse.tauExct*dt; % AMPA on Exct neurons
     InputxNMDAi = InputxNMDAi + (-InputxNMDAi/Ntwk.Synapse.NMDA.taurise)*dt; % NMDA from Input neurons
-    ExNMDAi = ExNMDAi + (-ExNMDAi/Ntwk.Synapse.NMDA.taurise)*dt; % NMDA from Exct neurons
+    ExNMDAi = ExNMDAi + (-ExNMDAi/Ntwk.Synapse.tauNMDA.rise)*dt; % NMDA from Exct neurons
     if any(InputSpikes)
         ExctgAMPA = ExctgAMPA + Ntwk.Synapse.gbarE*Ntwk.wInput*InputSpikes;
         InputxNMDAi = InputxNMDAi + InputSpikes;
@@ -140,8 +140,14 @@ for t = 1:(timesteps-1)
         ExctgAMPA = ExctgAMPA + Ntwk.Synapse.gbarE*WEE*DlyEspikes;
         ExNMDAi = ExNMDAi + DlyEspikes;
     end
-    InputgNMDAi = InputgNMDAi + (-InputgNMDAi/Ntwk.Synapse.NMDA.taudecay + (1-InputgNMDAi).*InputxNMDAi)*dt;
-    EgNMDAi = EgNMDAi + (-EgNMDAi/Ntwk.Synapse.NMDA.taudecay + (1-EgNMDAi).*ExNMDAi)*dt;
+    Ntwk.Synapse.NMDA.taurise = 2; % ms, Feldmeyer et al., 2002
+    Ntwk.Synapse.NMDA.taudecay = 26; % Feldmeyer et al., 2002
+    Ntwk.Synapse.NMDA.a = 0.062; % mV-1
+    Ntwk.Synapse.NMDA.b = 3.57; % mM
+    Ntwk.Synapse.NMDA.Mg2 = 1; % nM
+
+    InputgNMDAi = InputgNMDAi + (-InputgNMDAi/Ntwk.Synapse.tauNMDA.decay + (1-InputgNMDAi).*InputxNMDAi)*dt;
+    EgNMDAi = EgNMDAi + (-EgNMDAi/Ntwk.Synapse.tauNMDA.decay + (1-EgNMDAi).*ExNMDAi)*dt;
     ExctgNMDA = Ntwk.Synapse.gbarE*(WEE*EgNMDAi + Ntwk.wInput*InputgNMDAi);
 
     % GABA on excitatory neurons
@@ -153,13 +159,13 @@ for t = 1:(timesteps-1)
 
     % AMPA and NMDA on inhibitory neurons
     InhbtgAMPA = InhbtgAMPA - InhbtgAMPA/Ntwk.Synapse.tauExct*dt; % AMPA on Inhbt neurons
-    IxNMDAi = IxNMDAi + (-IxNMDAi/Ntwk.Synapse.NMDA.taurise)*dt; % NMDA from Exct neurons, targetting inhibitory neurons
+    IxNMDAi = IxNMDAi + (-IxNMDAi/Ntwk.Synapse.tauNMDA.rise)*dt; % NMDA from Exct neurons, targetting inhibitory neurons
     DlyEspikes = SpkTrnE(2:end, SpkTrnE(1,:) == t - Ntwk.Delay.EI/dt);
     if ~isempty(DlyEspikes)
         InhbtgAMPA = InhbtgAMPA + Ntwk.Synapse.gbarE*(WEI*DlyEspikes);
         IxNMDAi = IxNMDAi + DlyEspikes;
     end
-    IgNMDAi = IgNMDAi + (-IgNMDAi/Ntwk.Synapse.NMDA.taudecay + (1-IgNMDAi).*IxNMDAi)*dt;
+    IgNMDAi = IgNMDAi + (-IgNMDAi/Ntwk.Synapse.tauNMDA.decay + (1-IgNMDAi).*IxNMDAi)*dt;
     InhbtgNMDA = Ntwk.Synapse.gbarE*WEI*IgNMDAi;
 
     % GABA on inhibitory neurons
@@ -170,7 +176,7 @@ for t = 1:(timesteps-1)
     InhbtNosie = InhbtNosie + ((Ib - InhbtNosie)/Ntwk.Noise.tauN + gpuArray.randn(Ntwk.Inhbt.N,1)*Ntwk.Noise.sgm)*dt;
     
     % Membrane potential change for Exct neurons
-    INMDA = ExctgNMDA./(1+exp(-Ntwk.Synapse.NMDA.a*ExctV/Ntwk.Synapse.NMDA.b)*Ntwk.Synapse.NMDA.Mg2).*(Ntwk.VE - ExctV);
+    INMDA = ExctgNMDA./(1+exp(-a*ExctV/b)*Mg2).*(Ntwk.VE - ExctV);
     dV = (Ntwk.Exct.gL*(Ntwk.VL - ExctV) + ExctgAMPA.*(Ntwk.VE - ExctV) + INMDA + ExctgGABA.*(Ntwk.VI - ExctV) + ExctNoise)/Ntwk.Exct.Cm*dt;
     ExctV = ExctV + dV;
     ExctV(ExctRefraction>0) = Ntwk.Vreset;
@@ -189,7 +195,7 @@ for t = 1:(timesteps-1)
     ExctRefraction(Espikes) = refractionPeriod.E;
 
     % Membrane potential change for Inhbt neurons
-    INMDA = InhbtgNMDA./(1+exp(-Ntwk.Synapse.NMDA.a*InhbtV/Ntwk.Synapse.NMDA.b)*Ntwk.Synapse.NMDA.Mg2).*(Ntwk.VE - InhbtV);
+    INMDA = InhbtgNMDA./(1+exp(-a*InhbtV/b)*Mg2).*(Ntwk.VE - InhbtV);
     dV = (Ntwk.Inhbt.gL*(Ntwk.VL - InhbtV) + InhbtgAMPA.*(Ntwk.VE - InhbtV) + INMDA + InhbtgGABA.*(Ntwk.VI - InhbtV) + InhbtNosie)/Ntwk.Inhbt.Cm*dt;
     InhbtV = InhbtV + dV;
     InhbtV(InhbtRefraction>0) = Ntwk.Vreset;

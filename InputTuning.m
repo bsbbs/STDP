@@ -75,7 +75,7 @@ EShare2 = find(Ntwk.Cnnct_IE(:,IShare) & ECnnct2 > 0);
 tmp = Ntwk.wIE_initial(EShare2, IShare)/max(Ntwk.wIE_initial(EShare2, IShare)) + sum(Ntwk.Cnnct_Input(EShare2, :), 2)/max(sum(Ntwk.Cnnct_Input(EShare2, :), 2));
 EShare2 = EShare2(tmp == max(tmp)); % EShare1 receives inhibition from IShare and receives from input2
 
-Ntwk.Smpl.E = [E1, E2, EShare1, EShare2];
+Ntwk.Smpl.E = [E1(1), E2, EShare1, EShare2];
 Ntwk.Smpl.I = [I1, I2, IShare];
 for ei = 1:2
     plot(Ntwk.Exct.Location(Ntwk.Smpl.E(ei),1), Ntwk.Exct.Location(Ntwk.Smpl.E(ei),2), 'k^', 'MarkerSize', 6, 'MarkerFaceColor', 'k');

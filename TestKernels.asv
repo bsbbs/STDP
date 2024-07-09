@@ -3,17 +3,14 @@ plotdir = 'C:\Users\Bo\NYU Langone Health Dropbox\Shen Bo\Bo Shen Working files\
 Ntwkfile = fullfile(plotdir, 'Ntwk.mat');
 load(Ntwkfile);
 load(fullfile(plotdir, 'RealtimeMonitor_Event3.mat'));
-Ntwk.Synapse.tauNMDA.rise = 2; % ms, Feldmeyer et al., 2002
-Ntwk.Synapse.tauNMDA.decay = 26; % Feldmeyer et al., 2002
+
 dt = .1; % ms, time precision for simulation, in unit of second
-dur = 500; % ms
+dur = 100; % ms
 % Time vector
 timevec = [dt:dt:dur]';
 tsteps = numel(timevec);
-a = 0.062; % mV-1
-b = 3.57; % mM
-Mg2 = 1; % nM
-Ntwk.Synapse.gbarE = 3.25; % original value .14 nS
+
+Ntwk.Synapse.gbarE = 3.75; % original value .14 nS
 Ntwk.Synapse.gbarI = 31.5; % original value .35 nS
 ExctV = Ntwk.VL;
 ExctV2 = Ntwk.VL;
@@ -28,13 +25,12 @@ ExctgAMPA = 0;
 ExctgGABA = 0;
 InhbtgAMPA = 0;
 InhbtgI = 0;
-xi = 0;
-gNMDAi = 0;
+x = 0;
 gNMDA = 0;
 Output = [];
 for t = 1:tsteps
     % input spikes
-    if t*dt == 5 || (mod(t*dt, 5) == 0 && t*dt >= 300 && t*dt < 400)
+    if t*dt == 5
         InputSpikes = 1;
     else
         InputSpikes = 0;
@@ -43,7 +39,6 @@ for t = 1:tsteps
     WEI = 1;
     WIE = 1;
     WEE = 1;
-    wInput = 1;
     % Synaptic activities
     ExctgAMPA = ExctgAMPA - ExctgAMPA/Ntwk.Synapse.tauExct*dt ... % excitatory synaptic conductance on Exct neurons
         + Ntwk.Synapse.gbarE*InputSpikes;
@@ -51,16 +46,15 @@ for t = 1:tsteps
         + Ntwk.Synapse.gbarI*InputSpikes;
     InhbtgAMPA = InhbtgAMPA - InhbtgAMPA/Ntwk.Synapse.tauExct*dt ... % excitatory synaptic conductance on Inhbt neurons
         + Ntwk.Synapse.gbarE*InputSpikes;
-    dxi = (-xi/Ntwk.Synapse.tauNMDA.rise)*dt + InputSpikes;
+    dxi = (-xi/Ntwk.Synapse.tauNMDA.rise)*dt + Ntwk.Synapse.gbarE*InputSpikes;
     xi = xi + dxi;
     xi(xi < 0) = 0;
-    gNMDAi = gNMDAi + (-gNMDAi/Ntwk.Synapse.tauNMDA.decay + (1-gNMDAi)*xi)*dt;
-    gNMDAi(gNMDAi < 0) = 0;
-    gNMDA = Ntwk.Synapse.gbarE*wInput*gNMDAi;
+    dgNMDAi = gNMDAi + (-gNMDAi/Ntwk.Synapse.tauNMDA.decay + (1-gNMDAi)*xi)*dt;
+    gNMDA = gNMDA + dgNMDA;
+    gNMDA(gNMDA < 0) = 0;
     
     % Membrane potential change for Exct neurons receiving excitatory input
-    INMDA = gNMDA./(1+exp(-a*ExctV/b)*Mg2).*(Ntwk.VE - ExctV);
-    dV = (Ntwk.Exct.gL*(Ntwk.VL - ExctV) + ExctgAMPA.*(Ntwk.VE - ExctV) + INMDA)/Ntwk.Exct.Cm*dt;
+    dV = (Ntwk.Exct.gL*(Ntwk.VL - ExctV) + (ExctgAMPA + gNMDA).*(Ntwk.VE - ExctV))/Ntwk.Exct.Cm*dt;
     ExctV = ExctV + dV;
     ExctV(ExctRefraction>0) = Ntwk.Vreset;
     ExctRefraction = ExctRefraction - 1;
@@ -80,8 +74,7 @@ for t = 1:tsteps
     ExctRefraction2(Espikes2) = refractionPeriod.E;
     
     % Membrane potential change for Inhbt neurons
-    INMDA = gNMDA./(1+exp(-a*InhbtV/b)*Mg2).*(Ntwk.VE - InhbtV);
-    dV = (Ntwk.Inhbt.gL*(Ntwk.VL - InhbtV) + InhbtgAMPA.*(Ntwk.VE - InhbtV) + INMDA)/Ntwk.Inhbt.Cm*dt;
+    dV = (Ntwk.Inhbt.gL*(Ntwk.VL - InhbtV) + (InhbtgAMPA + gNMDA).*(Ntwk.VE - InhbtV))/Ntwk.Inhbt.Cm*dt;
     InhbtV = InhbtV + dV;
     InhbtV(InhbtRefraction>0) = Ntwk.Vreset;
     InhbtRefraction = InhbtRefraction - 1;
@@ -99,10 +92,10 @@ lg = [];
 lg(1) = plot(timevec, Output(:,1), 'k-', 'LineWidth',1);
 lg(2) = plot(timevec, Output(:,2), 'k--', 'LineWidth',1);
 lg(3) = plot(timevec, Output(:,3), 'r-', 'LineWidth',1);
-legend(lg, {'Excitatory to E','Inhibitory to E','Excitatory to I'}, 'location', 'best');
-ylabel('Membrane potential (mV)');
+legend(lg, {'Excitatory to E','Inhibitory to E','Excitatory to I'});
+ylabel('Membrane potential');
 xlabel('Time (ms)');
-mysavefig(h, filename, plotdir, 12, [4, 2], 1);
+mysavefig(h, filename, plotdir, 12, [2, 2], 1);
 
 %% Connection probability
 Distance = 0:200;
@@ -151,13 +144,12 @@ mysavefig(h, filename, plotdir, 12, [3,6], 1);
 Ntwk.Synapse.tauNMDA.rise = 2; % ms, Feldmeyer et al., 2002
 Ntwk.Synapse.tauNMDA.decay = 26; % Feldmeyer et al., 2002
 dt = .1; % ms, time precision for simulation, in unit of second
-dur = 200; % ms
+dur = 100; % ms
 % Time vector
 timevec = [dt:dt:dur]';
 tsteps = numel(timevec);
-wInput = 1;
-gNMDAi = 0;
-xi = 0; % the intermediate variable for the double exponential implementation
+gNMDA = 0;
+x = 0; % the intermediate variable for the double exponential implementation
 Output = [];
 a = 0.062; % mV-1
 b = 3.57; % mM
@@ -171,17 +163,17 @@ refractionPeriod.E = Ntwk.Exct.tauREF/dt;
 refractionPeriod.I = Ntwk.Inhbt.tauREF/dt;
 for t = 1:tsteps
     % input spikes
-    if mod(t*dt, 5) == 0 && t*dt < 100 % t*dt == 5 || t*dt == 10 || t*dt == 15 || t*dt == 20
+    if t*dt == 5
         InputSpikes = 1;
     else
         InputSpikes = 0;
     end
-    dxi = (-xi/Ntwk.Synapse.tauNMDA.rise)*dt + InputSpikes;
-    xi = xi + dxi;
-    xi(xi < 0) = 0;
-    gNMDAi = gNMDAi + (-gNMDAi/Ntwk.Synapse.tauNMDA.decay + (1-gNMDAi)*xi)*dt;
-    gNMDAi(gNMDAi < 0) = 0;
-    gNMDA = Ntwk.Synapse.gbarE*wInput*gNMDAi;
+    dx = (-x/Ntwk.Synapse.tauNMDA.rise)*dt + Ntwk.Synapse.gbarE*InputSpikes;
+    x = x + dx;
+    x(x < 0) = 0;
+    dgNMDA = (-gNMDA/Ntwk.Synapse.tauNMDA.decay + x)*dt;
+    gNMDA = gNMDA + dgNMDA;
+    gNMDA(gNMDA < 0) = 0;
     INMDA = gNMDA./(1+exp(-a*ExctV/b)*Mg2).*(Ntwk.VE - ExctV);
 
     % Membrane potential change for Exct neurons receiving excitatory input
@@ -194,25 +186,21 @@ for t = 1:tsteps
     ExctV(Espikes) = Ntwk.Vfire;
     ExctRefraction(Espikes) = refractionPeriod.E;
 
-    Output(t,:) = [INMDA, gNMDAi, xi, ExctV]; 
+    Output(t,:) = [INMDA, gNMDA, x, ExctV]; 
 end
 h = figure;
 filename = 'NMDA_DoubleExpo';
-subplot(1,3,1); hold on;
+subplot(1,2,1); hold on;
 lg = [];
-lg(1) = plot(timevec, Output(:,2), 'k--', 'LineWidth',1);
-lg(2) = plot(timevec, Output(:,3), 'k:', 'LineWidth',1);
-legend(lg, {'g_{NMDAi}','xi'});
+lg(1) = plot(timevec, Output(:,1), 'k-', 'LineWidth',1);
+lg(2) = plot(timevec, Output(:,2), 'k--', 'LineWidth',1);
+lg(3) = plot(timevec, Output(:,3), 'k:', 'LineWidth',1);
+legend(lg, {'I_{NMDA}','g_{NMDA}','x'});
 ylabel('Activities');
 xlabel('Time (ms)');
-mysavefig(h, filename, plotdir, 12, [6, 2], 1);
-subplot(1,3,2); hold on;
-plot(timevec, Output(:,1), 'k-', 'LineWidth',1);
-ylabel('Current (pA)');
-xlabel('Time (ms)');
-mysavefig(h, filename, plotdir, 12, [6, 2], 1);
-subplot(1,3,3); hold on;
+mysavefig(h, filename, plotdir, 12, [4, 2], 1);
+subplot(1,2,2); hold on;
 plot(timevec, Output(:,4), 'r-', 'LineWidth',1);
 ylabel('Membrane potential');
 xlabel('Time (ms)');
-mysavefig(h, filename, plotdir, 12, [6, 2], 1);
+mysavefig(h, filename, plotdir, 12, [4, 2], 1);
