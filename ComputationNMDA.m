@@ -2,7 +2,7 @@
 %% Define the input and output directories
 DefineIO;
 Ntrial = 1600;
-ProjectName = sprintf('SyncNMDA_%i', Ntrial);
+ProjectName = sprintf('SyncNMDA2_%i', Ntrial);
 plotdir = fullfile(Projdir, ProjectName);
 evi = 0;
 plotdirintersect = fullfile(plotdir, sprintf('Intersect%i', evi));
@@ -12,8 +12,14 @@ end
 %% load Ntwk file and trained weights
 Ntwkfile = fullfile(plotdir, 'Ntwk.mat');
 load(Ntwkfile);
-filename = sprintf('RealtimeMonitor_Event%i', evi);
-load(fullfile(plotdir, [filename, '.mat']));
+if evi >=1
+    filename = sprintf('RealtimeMonitor_Event%i', evi);
+    load(fullfile(plotdir, [filename, '.mat']));
+else
+    WEI = Ntwk.wEI_initial;
+    WIE = Ntwk.wIE_initial;
+    WEE = Ntwk.wEE_initial;
+end
 %% Visualize connection and pools of samples
 Sum1 = sum(Ntwk.wInput(:, Ntwk.Input.Origins == 1), 2);
 Sum2 = sum(Ntwk.wInput(:, Ntwk.Input.Origins == 2), 2);
@@ -107,13 +113,17 @@ InhbtV = Ntwk.VL*gpuArray.ones(Ntwk.Inhbt.N,1);
 ExctRefraction = gpuArray.zeros(Ntwk.Exct.N,1);
 InhbtRefraction = gpuArray.zeros(Ntwk.Inhbt.N,1);
 % - synaptic conductance (presynaptic-activity dependent)
+InputxNMDAi = gpuArray.zeros(Ntwk.Input.N, 1);
+InputgNMDAi = gpuArray.zeros(Ntwk.Input.N, 1);
 ExctgAMPA = gpuArray.zeros(Ntwk.Exct.N, 1);
+ExNMDAi = gpuArray.zeros(Ntwk.Exct.N, 1);
+EgNMDAi = gpuArray.zeros(Ntwk.Exct.N, 1);
 ExctgNMDA = gpuArray.zeros(Ntwk.Exct.N, 1);
-xE = gpuArray.zeros(Ntwk.Exct.N, 1);
 ExctgGABA = gpuArray.zeros(Ntwk.Exct.N, 1);
 InhbtgAMPA = gpuArray.zeros(Ntwk.Inhbt.N, 1);
+IxNMDAi = gpuArray.zeros(Ntwk.Exct.N, 1);
+IgNMDAi = gpuArray.zeros(Ntwk.Exct.N, 1);
 InhbtgNMDA = gpuArray.zeros(Ntwk.Inhbt.N, 1);
-xI = gpuArray.zeros(Ntwk.Inhbt.N, 1);
 InhbtgGABA = gpuArray.zeros(Ntwk.Inhbt.N, 1);
 % - spiking events
 Espikes = gpuArray.zeros(Ntwk.Exct.N,1);
@@ -137,59 +147,48 @@ for t = 1:(timesteps-1)
     % InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < spikeProbability*Seq(t,1);
     % InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < spikeProbability*Seq(t,2);
     if t*dt <= 2000
-        InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < spikeProbability*1;
-        InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < spikeProbability*0;
+        InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < Ntwk.Input.spikeProbability*1;
+        InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < Ntwk.Input.spikeProbability*0;
     else
-        InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < spikeProbability*0;
-        InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < spikeProbability*0;
+        InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < Ntwk.Input.spikeProbability*0;
+        InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < Ntwk.Input.spikeProbability*0;
     end
     % Synaptic activities
-    % AMPA on excitatory neurons
-    ExctgAMPA = ExctgAMPA - ExctgAMPA/Ntwk.Synapse.tauExct*dt; % excitatory synaptic conductance on Exct neurons
+    % AMPA and NMDA on Excitatory neurons
+    ExctgAMPA = ExctgAMPA - ExctgAMPA/Ntwk.Synapse.tauExct*dt; % AMPA on Exct neurons
+    InputxNMDAi = InputxNMDAi + (-InputxNMDAi/Ntwk.Synapse.NMDA.taurise)*dt; % NMDA from Input neurons
+    ExNMDAi = ExNMDAi + (-ExNMDAi/Ntwk.Synapse.NMDA.taurise)*dt; % NMDA from Exct neurons
     if any(InputSpikes)
-        ExctgAMPA = ExctgAMPA + Ntwk.Synapse.gbarE*Ntwk.Cnnct_Input.*Ntwk.wInput*InputSpikes;
+        ExctgAMPA = ExctgAMPA + Ntwk.Synapse.gbarE*Ntwk.wInput*InputSpikes;
+        InputxNMDAi = InputxNMDAi + InputSpikes;
     end
     DlyEspikes = SpkTrnE(2:end,SpkTrnE(1,:) == t - Ntwk.Delay.EE/dt);
     if ~isempty(DlyEspikes)
-        ExctgAMPA = ExctgAMPA + Ntwk.Synapse.gbarE*Ntwk.Cnnct_EE.*WEE*DlyEspikes;
+        ExctgAMPA = ExctgAMPA + Ntwk.Synapse.gbarE*WEE*DlyEspikes;
+        ExNMDAi = ExNMDAi + DlyEspikes;
     end
-    % NMDA on excitatory neurons
-    Delta = 0;
-    if any(InputSpikes)
-        Delta = Delta + Ntwk.Synapse.gbarE*Ntwk.Cnnct_Input.*Ntwk.wInput*InputSpikes;
-    end
-    DlyEspikes = SpkTrnE(2:end,SpkTrnE(1,:) == t - Ntwk.Delay.EE/dt);
-    if ~isempty(DlyEspikes)
-        Delta = Delta + Ntwk.Synapse.gbarE*Ntwk.Cnnct_EE.*WEE*DlyEspikes;
-    end
-    xE = xE + (-xE/Ntwk.Synapse.tauNMDA.rise)*dt + Delta;
-    ExctgNMDA = ExctgNMDA + (-ExctgNMDA/Ntwk.Synapse.tauNMDA.decay + xE)*dt;
+    InputgNMDAi = InputgNMDAi + (-InputgNMDAi/Ntwk.Synapse.NMDA.taudecay + (1-InputgNMDAi).*InputxNMDAi)*dt;
+    EgNMDAi = EgNMDAi + (-EgNMDAi/Ntwk.Synapse.NMDA.taudecay + (1-EgNMDAi).*ExNMDAi)*dt;
+    ExctgNMDA = Ntwk.Synapse.gbarE*(WEE*EgNMDAi + Ntwk.wInput*InputgNMDAi);
+
     % GABA on excitatory neurons
     ExctgGABA = ExctgGABA - ExctgGABA/Ntwk.Synapse.tauInhbt*dt; % inhibitory synaptic conductance on Exct neurons
     DlyIspikes = SpkTrnI(2:end,SpkTrnI(1,:) == t - Ntwk.Delay.IE/dt);
     if ~isempty(DlyIspikes)
-        ExctgGABA = ExctgGABA + Ntwk.Synapse.gbarI*Ntwk.Cnnct_IE.*WIE*DlyIspikes;
+        ExctgGABA = ExctgGABA + Ntwk.Synapse.gbarI*WIE*DlyIspikes;
     end
-    % AMPA on inhibitory neurons
-    InhbtgAMPA = InhbtgAMPA - InhbtgAMPA/Ntwk.Synapse.tauExct*dt; % excitatory synaptic conductance on Inhbt neurons
-    DlyEspikes = SpkTrnE(2:end,SpkTrnE(1,:) == t - Ntwk.Delay.EI/dt);
+
+    % AMPA and NMDA on inhibitory neurons
+    InhbtgAMPA = InhbtgAMPA - InhbtgAMPA/Ntwk.Synapse.tauExct*dt; % AMPA on Inhbt neurons
+    IxNMDAi = IxNMDAi + (-IxNMDAi/Ntwk.Synapse.NMDA.taurise)*dt; % NMDA from Exct neurons, targetting inhibitory neurons
+    DlyEspikes = SpkTrnE(2:end, SpkTrnE(1,:) == t - Ntwk.Delay.EI/dt);
     if ~isempty(DlyEspikes)
-        InhbtgAMPA = InhbtgAMPA + Ntwk.Synapse.gbarE*(Ntwk.Cnnct_EI.*WEI*DlyEspikes);
+        InhbtgAMPA = InhbtgAMPA + Ntwk.Synapse.gbarE*(WEI*DlyEspikes);
+        IxNMDAi = IxNMDAi + DlyEspikes;
     end
-    % NMDA on inhibitory neurons
-    Delta = 0;
-    DlyEspikes = SpkTrnE(2:end,SpkTrnE(1,:) == t - Ntwk.Delay.EI/dt);
-    if ~isempty(DlyEspikes)
-        Delta = Delta + Ntwk.Synapse.gbarE*(Ntwk.Cnnct_EI.*WEI*DlyEspikes);
-    end
-    xI = xI + (-xI/Ntwk.Synapse.tauNMDA.rise)*dt + Delta;
-    InhbtgNMDA = InhbtgNMDA + (-InhbtgNMDA/Ntwk.Synapse.tauNMDA.decay + xI)*dt;
-    % GABA on excitatory neurons
-    ExctgGABA = ExctgGABA - ExctgGABA/Ntwk.Synapse.tauInhbt*dt; % inhibitory synaptic conductance on Exct neurons
-    DlyIspikes = SpkTrnI(2:end,SpkTrnI(1,:) == t - Ntwk.Delay.IE/dt);
-    if ~isempty(DlyIspikes)
-        ExctgGABA = ExctgGABA + Ntwk.Synapse.gbarI*Ntwk.Cnnct_IE.*WIE*DlyIspikes;
-    end
+    IgNMDAi = IgNMDAi + (-IgNMDAi/Ntwk.Synapse.NMDA.taudecay + (1-IgNMDAi).*IxNMDAi)*dt;
+    InhbtgNMDA = Ntwk.Synapse.gbarE*WEI*IgNMDAi;
+
     % GABA on inhibitory neurons
     InhbtgGABA = InhbtgGABA - InhbtgGABA/Ntwk.Synapse.tauInhbt*dt; % inhibitory synaptic conductance on Inhbt neurons
 
@@ -198,7 +197,8 @@ for t = 1:(timesteps-1)
     InhbtNosie = InhbtNosie + ((Ib - InhbtNosie)/Ntwk.Noise.tauN + gpuArray.randn(Ntwk.Inhbt.N,1)*Ntwk.Noise.sgm)*dt;
     
     % Membrane potential change for Exct neurons
-    dV = (Ntwk.Exct.gL*(Ntwk.VL - ExctV) + (ExctgAMPA + ExctgNMDA).*(Ntwk.VE - ExctV) + ExctgGABA.*(Ntwk.VI - ExctV) + ExctNoise)/Ntwk.Exct.Cm*dt;
+    INMDA = ExctgNMDA./(1+exp(-Ntwk.Synapse.NMDA.a*ExctV/Ntwk.Synapse.NMDA.b)*Ntwk.Synapse.NMDA.Mg2).*(Ntwk.VE - ExctV);
+    dV = (Ntwk.Exct.gL*(Ntwk.VL - ExctV) + ExctgAMPA.*(Ntwk.VE - ExctV) + INMDA + ExctgGABA.*(Ntwk.VI - ExctV) + ExctNoise)/Ntwk.Exct.Cm*dt;
     ExctV = ExctV + dV;
     ExctV(ExctRefraction>0) = Ntwk.Vreset;
     ExctRefraction = ExctRefraction - 1;
@@ -216,7 +216,8 @@ for t = 1:(timesteps-1)
     ExctRefraction(Espikes) = refractionPeriod.E;
 
     % Membrane potential change for Inhbt neurons
-    dV = (Ntwk.Inhbt.gL*(Ntwk.VL - InhbtV) + (InhbtgAMPA + InhbtgNMDA).*(Ntwk.VE - InhbtV) + InhbtgGABA.*(Ntwk.VI - InhbtV) + InhbtNosie)/Ntwk.Inhbt.Cm*dt;
+    INMDA = InhbtgNMDA./(1+exp(-Ntwk.Synapse.NMDA.a*InhbtV/Ntwk.Synapse.NMDA.b)*Ntwk.Synapse.NMDA.Mg2).*(Ntwk.VE - InhbtV);
+    dV = (Ntwk.Inhbt.gL*(Ntwk.VL - InhbtV) + InhbtgAMPA.*(Ntwk.VE - InhbtV) + INMDA + InhbtgGABA.*(Ntwk.VI - InhbtV) + InhbtNosie)/Ntwk.Inhbt.Cm*dt;
     InhbtV = InhbtV + dV;
     InhbtV(InhbtRefraction>0) = Ntwk.Vreset;
     InhbtRefraction = InhbtRefraction - 1;

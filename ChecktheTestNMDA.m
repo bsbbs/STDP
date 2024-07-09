@@ -1,7 +1,9 @@
 % Check the test
 DefineIO;
+Setup;
+dt = .1;
 Ntrial = 1600;
-ProjectName = sprintf('SyncNMDA_%i', Ntrial);
+ProjectName = sprintf('SyncNMDA2_%i', Ntrial);
 plotdir = fullfile(Projdir, ProjectName);
 if ~exist(plotdir,'dir')
     mkdir(plotdir);

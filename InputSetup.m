@@ -1,9 +1,9 @@
 %% Inputs of single source, assume this long-range projection only intervenes Exct neurons
 %% Define input connection matrix
 Ntwk.Input.Source = 2; % Number of input source(s)
-Ntwk.Input.N = 400*Ntwk.Input.Source; % number of the input (excitarory) neurons
-Ntwk.Input.Tube = 100; % um, the Gaussuan standard deviation of long-range projection area. All input neurons locate in the circle area
-Ntwk.AxonRange.Input = 130; % um, for each input neuron, the axon connection to the neighbouring E neuron is assumed the same as Gaussian distance delay as E to E
+Ntwk.Input.N = 1000*Ntwk.Input.Source; % number of the input (excitarory) neurons
+Ntwk.Input.Tube = 50; % um, the Gaussuan standard deviation of long-range projection area. All input neurons locate in the circle area
+Ntwk.AxonRange.Input = 70; % 130; % um, for each input neuron, the axon connection to the neighbouring E neuron is assumed the same as Gaussian distance delay as E to E
 Ntwk.CnnctProb.Input = 0.1; % The connection probability from input neurons are set as the same as E to E
 gpurng(2024);
 r = gpuArray.randn(Ntwk.Input.N,1)*Ntwk.Input.Tube; % radius of the input fiber distribution

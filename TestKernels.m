@@ -51,8 +51,7 @@ for t = 1:tsteps
         + Ntwk.Synapse.gbarI*InputSpikes;
     InhbtgAMPA = InhbtgAMPA - InhbtgAMPA/Ntwk.Synapse.tauExct*dt ... % excitatory synaptic conductance on Inhbt neurons
         + Ntwk.Synapse.gbarE*InputSpikes;
-    dxi = (-xi/Ntwk.Synapse.tauNMDA.rise)*dt + InputSpikes;
-    xi = xi + dxi;
+    xi = xi + (-xi/Ntwk.Synapse.tauNMDA.rise)*dt + InputSpikes;
     xi(xi < 0) = 0;
     gNMDAi = gNMDAi + (-gNMDAi/Ntwk.Synapse.tauNMDA.decay + (1-gNMDAi)*xi)*dt;
     gNMDAi(gNMDAi < 0) = 0;
@@ -60,7 +59,7 @@ for t = 1:tsteps
     
     % Membrane potential change for Exct neurons receiving excitatory input
     INMDA = gNMDA./(1+exp(-a*ExctV/b)*Mg2).*(Ntwk.VE - ExctV);
-    dV = (Ntwk.Exct.gL*(Ntwk.VL - ExctV) + ExctgAMPA.*(Ntwk.VE - ExctV) + INMDA)/Ntwk.Exct.Cm*dt;
+    dV = (Ntwk.Exct.gL*(Ntwk.VL - ExctV) + 0*ExctgAMPA.*(Ntwk.VE - ExctV) + INMDA)/Ntwk.Exct.Cm*dt;
     ExctV = ExctV + dV;
     ExctV(ExctRefraction>0) = Ntwk.Vreset;
     ExctRefraction = ExctRefraction - 1;
@@ -81,7 +80,7 @@ for t = 1:tsteps
     
     % Membrane potential change for Inhbt neurons
     INMDA = gNMDA./(1+exp(-a*InhbtV/b)*Mg2).*(Ntwk.VE - InhbtV);
-    dV = (Ntwk.Inhbt.gL*(Ntwk.VL - InhbtV) + InhbtgAMPA.*(Ntwk.VE - InhbtV) + INMDA)/Ntwk.Inhbt.Cm*dt;
+    dV = (Ntwk.Inhbt.gL*(Ntwk.VL - InhbtV) + 0*InhbtgAMPA.*(Ntwk.VE - InhbtV) + INMDA)/Ntwk.Inhbt.Cm*dt;
     InhbtV = InhbtV + dV;
     InhbtV(InhbtRefraction>0) = Ntwk.Vreset;
     InhbtRefraction = InhbtRefraction - 1;
@@ -94,7 +93,7 @@ for t = 1:tsteps
 end
 %
 h = figure; hold on;
-filename = 'SynapseRestingAmplitude';
+filename = 'SynapseRestingAmplitudeNMDA';
 lg = [];
 lg(1) = plot(timevec, Output(:,1), 'k-', 'LineWidth',1);
 lg(2) = plot(timevec, Output(:,2), 'k--', 'LineWidth',1);
