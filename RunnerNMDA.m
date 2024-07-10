@@ -101,7 +101,7 @@ ylabel('y (\mum)', 'Color', 'w');
 xlim([-Ntwk.Scale, Ntwk.Scale]);
 ylim([-Ntwk.Scale/2, Ntwk.Scale/2]);
 % Save spike train to incoorperate the delays
-bankwidth = max([Ntwk.Delay.EE, Ntwk.Delay.EE, Ntwk.Delay.IE])/dt;
+bankwidth = round(max([Ntwk.Delay.EE, Ntwk.Delay.EE, Ntwk.Delay.IE])/dt);
 SpkTrnE = nan(Ntwk.Exct.N+1,bankwidth); tickE = 0;
 SpkTrnI = nan(Ntwk.Inhbt.N+1,bankwidth); tickI = 0;
 smpl = 0;
@@ -135,7 +135,7 @@ for t = 1:(timesteps-1)
         ExctgAMPA = ExctgAMPA + Ntwk.Synapse.gbarE*Ntwk.wInput*InputSpikes;
         InputxNMDAi = InputxNMDAi + InputSpikes;
     end
-    DlyEspikes = SpkTrnE(2:end,SpkTrnE(1,:) == t - Ntwk.Delay.EE/dt);
+    DlyEspikes = SpkTrnE(2:end,SpkTrnE(1,:) == t - round(Ntwk.Delay.EE/dt));
     if ~isempty(DlyEspikes)
         ExctgAMPA = ExctgAMPA + Ntwk.Synapse.gbarE*WEE*DlyEspikes;
         ExNMDAi = ExNMDAi + DlyEspikes;
@@ -146,7 +146,7 @@ for t = 1:(timesteps-1)
 
     % GABA on excitatory neurons
     ExctgGABA = ExctgGABA - ExctgGABA/Ntwk.Synapse.tauInhbt*dt; % inhibitory synaptic conductance on Exct neurons
-    DlyIspikes = SpkTrnI(2:end,SpkTrnI(1,:) == t - Ntwk.Delay.IE/dt);
+    DlyIspikes = SpkTrnI(2:end,SpkTrnI(1,:) == t - round(Ntwk.Delay.IE/dt));
     if ~isempty(DlyIspikes)
         ExctgGABA = ExctgGABA + Ntwk.Synapse.gbarI*WIE*DlyIspikes;
     end
@@ -154,7 +154,7 @@ for t = 1:(timesteps-1)
     % AMPA and NMDA on inhibitory neurons
     InhbtgAMPA = InhbtgAMPA - InhbtgAMPA/Ntwk.Synapse.tauExct*dt; % AMPA on Inhbt neurons
     IxNMDAi = IxNMDAi + (-IxNMDAi/Ntwk.Synapse.NMDA.taurise)*dt; % NMDA from Exct neurons, targetting inhibitory neurons
-    DlyEspikes = SpkTrnE(2:end, SpkTrnE(1,:) == t - Ntwk.Delay.EI/dt);
+    DlyEspikes = SpkTrnE(2:end, SpkTrnE(1,:) == t - round(Ntwk.Delay.EI/dt));
     if ~isempty(DlyEspikes)
         InhbtgAMPA = InhbtgAMPA + Ntwk.Synapse.gbarE*(WEI*DlyEspikes);
         IxNMDAi = IxNMDAi + DlyEspikes;
