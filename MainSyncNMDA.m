@@ -1,10 +1,10 @@
 %% define I/O
 DefineIO;
 % Define time vector, check input sequences
-dt = .1; % ms, time precision for simulation, in unit of second
+dt = 1; % ms, time precision for simulation, in unit of second
 % Spike train of the input, example trials
 Ntrial = 1600;
-ProjectName = sprintf('SyncNMDA2_%i', Ntrial);
+ProjectName = sprintf('SyncNMDA2dt1_%i', Ntrial);
 plotdir = fullfile(Projdir, ProjectName);
 if ~exist(plotdir,'dir')
     mkdir(plotdir);
