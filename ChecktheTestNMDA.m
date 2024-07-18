@@ -3,7 +3,7 @@ DefineIO;
 Setup;
 dt = 1;
 Ntrial = 1600;
-ProjectName = sprintf('SyncNMDA2dt1_%i', Ntrial);
+ProjectName = sprintf('SyncNMDA2_%i', Ntrial);
 plotdir = fullfile(Projdir, ProjectName);
 if ~exist(plotdir,'dir')
     mkdir(plotdir);
@@ -17,7 +17,7 @@ smplonsets = round(evs(round(linspace(1,numel(evs(:,1)),18)),1)*1000/dt);
 EIMtrx = nan(numel(smplonsets)+1, Ntwk.Input.Source);
 IEMtrx = nan(numel(smplonsets)+1,  Ntwk.Input.Source);
 RIMtrx = nan(numel(smplonsets)+1, Ntwk.Input.Source, Ntwk.Input.Source);
-for evi = 0:numel(smplonsets)
+for evi = 0:7%numel(smplonsets)
     if evi == 0
         WEI = Ntwk.wEI_initial;
         WIE = Ntwk.wIE_initial;
@@ -40,7 +40,7 @@ for evi = 0:numel(smplonsets)
         end
     end
 end
-%% 
+
 h = figure;
 filename = 'WeightsSummaryDynamics';
 subplot(2,2,1); hold on;
@@ -53,7 +53,7 @@ ylabel('Summed weights');
 mysavefig(h, filename, plotdir, 12, [5, 5], 1);
 subplot(2,2,2); hold on;
 for i = 1:2
-    plot(0:18,IEMtrx, 'Color',OKeeffe(i,:));
+    plot(0:18,IEMtrx(:,i), 'Color',OKeeffe(i,:));
 end
 legend({'I to E to Input 1','I to E to Input 2'}, 'Location','best');
 xlabel('Check time point');
@@ -76,7 +76,7 @@ xlabel('Check time point');
 ylabel('Summed weights');
 mysavefig(h, filename, plotdir, 12, [5, 5], 1);
 %%
-for evi = 1:18%numel(smplonsets)
+for evi = 1:7%numel(smplonsets)
     filename = sprintf('RealtimeMonitor_Event%i', evi);
     load(fullfile(plotdir, [filename, '.mat']));
     plotdirintersect = fullfile(plotdir, sprintf('Intersect%i', evi));

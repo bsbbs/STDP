@@ -1,7 +1,7 @@
 function Ntwk = InputTuning1D(Ntwk, OKeeffe, plotdir)
 %% Input tuning
-xinterval = Ntwk.Scale/60;
-xvec = -Ntwk.Scale:xinterval:Ntwk.Scale;
+xinterval = Ntwk.XScale/60;
+xvec = -Ntwk.Scale:xinterval:Ntwk.XScale;
 Tuning.Input = zeros(Ntwk.Input.Source, numel(xvec));
 for xi = 1:numel(xvec)
     for si = 1:Ntwk.Input.Source
