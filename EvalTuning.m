@@ -177,6 +177,69 @@ title('E to E');
 autoy = ylim();
 ylim([autoy(1)-0.1*(range(autoy)),autoy(2)]);
 mysavefig(h, filename, plotdir, 12, [2.5, 5], 2);
+%% Effective connection probability
+% E-to-I connections, tuning to input sources
+h = figure;
+filename = 'Effctv_Connections';
+subplot(3,1,1); hold on;
+legendLabels = {'Input 1','Input 2'};
+wEI = Ntwk.Cnnct_EI;
+Tuning.EtoI = zeros(Ntwk.Input.Source, numel(xvec)-1);
+lgd = [];
+for si = 1:Ntwk.Input.Source
+    for xi = 1:(numel(xvec)-1)
+        InputtoI = wEI*Ntwk.Cnnct_Input; % from
+        Tuning.EtoI(si, xi) = sum(InputtoI(Ntwk.Inhbt.Location(:,1) >= xvec(xi) &...
+            Ntwk.Inhbt.Location(:,1) <= xvec(xi) + xinterval, Ntwk.Input.Origins == si), 'all');
+    end
+    lgd(si) = plot(xvec(1:end-1)+xinterval/2, Tuning.EtoI(si,:), '-', 'LineWidth', .75,'Color', OKeeffe(si,:));
+end
+
+xlabel('Locations of I neurons (\mum)');
+ylabel('Effective connections');
+title('E to I');
+autoy = ylim();
+ylim([autoy(1)-0.1*(range(autoy)),autoy(2)]);
+legend(lgd, legendLabels, 'Location', 'best');
+mysavefig(h, filename, plotdir, 12, [2.5, 5], 1);
+% I to E connections
+subplot(3,1,2); hold on;
+wIE = Ntwk.Cnnct_IE;
+Tuning.ItoE = zeros(Ntwk.Input.Source, numel(xvec)-1);
+lgd = [];
+for si = 1:Ntwk.Input.Source
+    for xi = 1:(numel(xvec)-1)
+        ItoInput = Ntwk.Cnnct_Input'*wIE; % to
+        Tuning.ItoE(si, xi) = sum(ItoInput(Ntwk.Input.Origins == si, Ntwk.Inhbt.Location(:,1) >= xvec(xi) &...
+            Ntwk.Inhbt.Location(:,1) <= xvec(xi) + xinterval), 'all');
+    end
+    lgd(si) = plot(xvec(1:end-1)+xinterval/2, Tuning.ItoE(si,:), '-', 'LineWidth', .75,'Color', OKeeffe(si,:));
+end
+xlabel('Locations of I neurons (\mum)');
+ylabel('Effective connections');
+title('I to E');
+autoy = ylim();
+ylim([autoy(1)-0.1*(range(autoy)),autoy(2)]);
+mysavefig(h, filename, plotdir, 12, [2.5, 5], 1);
+% E to E connections
+subplot(3,1,3); hold on;
+wEE = Ntwk.Cnnct_EE;
+Tuning.EtoE = zeros(Ntwk.Input.Source, numel(xvec)-1);
+lgd = [];
+for si = 1:Ntwk.Input.Source
+    for xi = 1:(numel(xvec)-1)
+        EtoInput = Ntwk.Cnnct_Input'*wEE; % to
+        Tuning.EtoE(si, xi) = sum(EtoInput(Ntwk.Input.Origins == si, Ntwk.Exct.Location(:,1) >= xvec(xi) &...
+            Ntwk.Exct.Location(:,1) <= xvec(xi) + xinterval), 'all');
+    end
+    lgd(si) = plot(xvec(1:end-1)+xinterval/2, Tuning.EtoE(si,:), '-', 'LineWidth', .75,'Color', OKeeffe(si,:));
+end
+xlabel('Locations of E neurons (\mum)');
+ylabel('Effective connections');
+title('E to E');
+autoy = ylim();
+ylim([autoy(1)-0.1*(range(autoy)),autoy(2)]);
+mysavefig(h, filename, plotdir, 12, [2.5, 5], 1);
 %% Summed tuning of the feedback inhibition, E_to_I * I_to_E
 
 % initial feedback gain control

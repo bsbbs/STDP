@@ -34,7 +34,7 @@ gNMDA = 0;
 Output = [];
 for t = 1:tsteps
     % input spikes
-    if t*dt == 5 || (mod(t*dt, 5) == 0 && t*dt >= 300 && t*dt < 400)
+    if t*dt == 5 || (mod(t*dt, 10) == 0 && t*dt >= 300 && t*dt < 400)
         InputSpikes = 1;
     else
         InputSpikes = 0;
@@ -59,7 +59,7 @@ for t = 1:tsteps
     
     % Membrane potential change for Exct neurons receiving excitatory input
     INMDA = gNMDA./(1+exp(-a*ExctV/b)*Mg2).*(Ntwk.VE - ExctV);
-    dV = (Ntwk.Exct.gL*(Ntwk.VL - ExctV) + 0*ExctgAMPA.*(Ntwk.VE - ExctV) + INMDA)/Ntwk.Exct.Cm*dt;
+    dV = (Ntwk.Exct.gL*(Ntwk.VL - ExctV) + ExctgAMPA.*(Ntwk.VE - ExctV) + INMDA)/Ntwk.Exct.Cm*dt;
     ExctV = ExctV + dV;
     ExctV(ExctRefraction>0) = Ntwk.Vreset;
     ExctRefraction = ExctRefraction - 1;
@@ -80,7 +80,7 @@ for t = 1:tsteps
     
     % Membrane potential change for Inhbt neurons
     INMDA = gNMDA./(1+exp(-a*InhbtV/b)*Mg2).*(Ntwk.VE - InhbtV);
-    dV = (Ntwk.Inhbt.gL*(Ntwk.VL - InhbtV) + 0*InhbtgAMPA.*(Ntwk.VE - InhbtV) + INMDA)/Ntwk.Inhbt.Cm*dt;
+    dV = (Ntwk.Inhbt.gL*(Ntwk.VL - InhbtV) + InhbtgAMPA.*(Ntwk.VE - InhbtV) + INMDA)/Ntwk.Inhbt.Cm*dt;
     InhbtV = InhbtV + dV;
     InhbtV(InhbtRefraction>0) = Ntwk.Vreset;
     InhbtRefraction = InhbtRefraction - 1;
@@ -93,7 +93,7 @@ for t = 1:tsteps
 end
 %
 h = figure; hold on;
-filename = 'SynapseRestingAmplitudeNMDA';
+filename = 'SynapseRestingAmplitudeBoth';
 lg = [];
 lg(1) = plot(timevec, Output(:,1), 'k-', 'LineWidth',1);
 lg(2) = plot(timevec, Output(:,2), 'k--', 'LineWidth',1);

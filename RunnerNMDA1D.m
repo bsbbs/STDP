@@ -5,14 +5,14 @@ Setup;
 
 %% Build the neural network
 show = 1;
-NetworkgeneratorPeriodicGPU;
+NetworkgeneratorPeriodicGPU1D;
 
 %% Specify project name and output
 
 Rsltfile = fullfile(plotdir,'Rslts.mat');
 
 %% Build the Input structure
-InputSetup;
+InputSetup1D;
 
 %% Simulating the neural network
 % Initializing the network status at t=0
@@ -89,7 +89,7 @@ xlabel('Time (ms)');
 ylabel('Neurons');
 ylim([1, Ntwk.Exct.N]);
 title('Raster plot of Exct/Inhbt neurons');
-h2 = figure('Position', [1, 1, 1920, 960]); hold on;
+h2 = figure('Position', [1, 1, 1920, 460]); hold on;
 pbaspect([2 1 1]);
 h2.Color = 'k'; % Sets the figure background to black
 ax = gca;
@@ -98,8 +98,8 @@ ax.XColor = 'w';
 ax.YColor = 'w';
 xlabel('x (\mum)', 'Color', 'w');
 ylabel('y (\mum)', 'Color', 'w');
-xlim([-Ntwk.Scale, Ntwk.Scale]);
-ylim([-Ntwk.Scale/2, Ntwk.Scale/2]);
+xlim([-Ntwk.XScale, Ntwk.XScale]);
+ylim([-Ntwk.YScale, Ntwk.YScale]);
 % Save spike train to incoorperate the delays
 bankwidth = round(max([Ntwk.Delay.EE, Ntwk.Delay.EE, Ntwk.Delay.IE])/dt);
 SpkTrnE = nan(Ntwk.Exct.N+1,bankwidth); tickE = 0;
