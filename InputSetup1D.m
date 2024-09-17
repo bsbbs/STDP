@@ -11,7 +11,7 @@ r = gpuArray.randn(Ntwk.Input.N,1)*Ntwk.Input.Tube; % radius of the input fiber 
 gpurng(2025);
 phi = gpuArray.rand(Ntwk.Input.N,1)*2*pi; % angle of the location of the input fiber
 xE = cos(phi).*r;
-tmp = [-Ntwk.XScale, -100, 100, Ntwk.XScale]; % ([0:1/(1+Ntwk.Input.Source):1]-1/2)*Ntwk.XScale*2;
+tmp = [-Ntwk.XScale, -50, 50, Ntwk.XScale]; % ([0:1/(1+Ntwk.Input.Source):1]-1/2)*Ntwk.XScale*2;
 shifts = repmat(tmp(2:end-1), Ntwk.Input.N/Ntwk.Input.Source, 1);
 xE = xE + shifts(:);
 yE = -Ntwk.YScale + gpuArray.rand(Ntwk.Input.N,1)*Ntwk.YScale*2; % sin(phi).*r;

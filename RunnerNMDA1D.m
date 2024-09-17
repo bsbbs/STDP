@@ -278,6 +278,7 @@ for t = 1:(timesteps-1)
     end
 end
 fprintf('Successfully completed\n');
+save(Rsltfile, 'Ntwk', 'Seq', 'Smpl', 'WEI', 'WIE', 'WEE', '-v7.3');
 
 %% visualizing example neurons
 % % load(Rsltfile);
@@ -419,7 +420,6 @@ mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
 % SynpseDynamics;
 EvalTuning(Ntwk,WEE,WEI,WIE,OKeeffe,plotdir);
 %% Save results
-close all;
-clearvars -except 'Ntwk' 'Seq' 'Exmpl' 'WEI' 'WIE' 'WEE' 'Rsltfile';
-save(Rsltfile, 'Ntwk', 'Seq', 'Smpl', 'WEI', 'WIE', 'WEE', '-v7.3');
+% close all;
+% clearvars -except 'Ntwk' 'Seq' 'Exmpl' 'WEI' 'WIE' 'WEE' 'Rsltfile';
 
