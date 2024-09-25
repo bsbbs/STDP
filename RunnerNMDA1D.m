@@ -279,10 +279,7 @@ for t = 1:(timesteps-1)
 end
 fprintf('Successfully completed\n');
 save(Rsltfile, 'Ntwk', 'Seq', 'Smpl', 'WEI', 'WIE', 'WEE', '-v7.3');
-<<<<<<< Updated upstream
 
-=======
->>>>>>> Stashed changes
 %% visualizing example neurons
 % % load(Rsltfile);
 % h = figure;

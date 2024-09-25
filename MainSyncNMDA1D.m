@@ -4,11 +4,7 @@ DefineIO1D;
 dt = .1; % ms, time precision for simulation, in unit of second
 % Spike train of the input, example trials
 Ntrial = 1600;
-<<<<<<< Updated upstream
-ProjectName = sprintf('SyncNMDA1D100dt1_%i', Ntrial);
-=======
 ProjectName = sprintf('ASyncNMDA1D100_%i', Ntrial);
->>>>>>> Stashed changes
 plotdir = fullfile(Projdir, ProjectName);
 if ~exist(plotdir,'dir')
     mkdir(plotdir);
