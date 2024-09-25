@@ -279,7 +279,10 @@ for t = 1:(timesteps-1)
 end
 fprintf('Successfully completed\n');
 save(Rsltfile, 'Ntwk', 'Seq', 'Smpl', 'WEI', 'WIE', 'WEE', '-v7.3');
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 %% visualizing example neurons
 % % load(Rsltfile);
 % h = figure;
@@ -416,9 +419,10 @@ c.Location = 'northoutside';
 xlabel("Exct neurons");
 ylabel("Exct neurons");
 mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
+
 %% 
 % SynpseDynamics;
-EvalTuning(Ntwk,WEE,WEI,WIE,OKeeffe,plotdir);
+EvalTuning1D(Ntwk,WEE,WEI,WIE,OKeeffe,plotdir);
 %% Save results
 % close all;
 % clearvars -except 'Ntwk' 'Seq' 'Exmpl' 'WEI' 'WIE' 'WEE' 'Rsltfile';

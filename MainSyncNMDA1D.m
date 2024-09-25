@@ -1,10 +1,14 @@
 %% define I/O
 DefineIO1D;
 % Define time vector, check input sequences
-dt = 1; % ms, time precision for simulation, in unit of second
+dt = .1; % ms, time precision for simulation, in unit of second
 % Spike train of the input, example trials
 Ntrial = 1600;
+<<<<<<< Updated upstream
 ProjectName = sprintf('SyncNMDA1D100dt1_%i', Ntrial);
+=======
+ProjectName = sprintf('ASyncNMDA1D100_%i', Ntrial);
+>>>>>>> Stashed changes
 plotdir = fullfile(Projdir, ProjectName);
 if ~exist(plotdir,'dir')
     mkdir(plotdir);
@@ -15,7 +19,7 @@ if ~exist(Seqfile, 'file')
     % values = ParetoSequence(Ntrial, sigma);
     values = ones(Ntrial,2);
     [Seq, evs] = Generator(Ntrial, values, dt);
-    Seq = Seq(:, 1:2);
+    Seq = Seq(:, [1,3]);
     % Time vector
     duration = length(Seq)*dt; % ms
     time = [dt:dt:duration]';
@@ -40,4 +44,7 @@ yticks([1:2]);
 %close(h);
 % runner
 RunnerNMDA1D;
+% Evaluation
+ChecktheTestNMDA1D;
+ComputationNMDA1D;
 

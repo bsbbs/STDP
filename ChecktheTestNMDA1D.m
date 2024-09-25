@@ -1,13 +1,13 @@
 % Check the test
-DefineIO1D;
-Setup;
-dt = .1;
-Ntrial = 1600;
-ProjectName = sprintf('SyncNMDA1D200_%i', Ntrial);
-plotdir = fullfile(Projdir, ProjectName);
-if ~exist(plotdir,'dir')
-    mkdir(plotdir);
-end
+% DefineIO1D;
+% Setup;
+% dt = .1;
+% Ntrial = 1600;
+% ProjectName = sprintf('SyncNMDA1D100_%i', Ntrial);
+% plotdir = fullfile(Projdir, ProjectName);
+% if ~exist(plotdir,'dir')
+%     mkdir(plotdir);
+% end
 Seqfile = fullfile(plotdir, 'Seq.mat');
 load(Seqfile);
 Ntwkfile = fullfile(plotdir, 'Ntwk.mat');
