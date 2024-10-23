@@ -1,8 +1,4 @@
 % Runner
-
-%% Setup for visualization etc
-Setup;
-
 %% Build the neural network
 show = 1;
 NetworkgeneratorPeriodicGPU1D;
@@ -280,109 +276,6 @@ end
 fprintf('Successfully completed\n');
 save(Rsltfile, 'Ntwk', 'Seq', 'Smpl', 'WEI', 'WIE', 'WEE', '-v7.3');
 
-%% visualizing example neurons
-% % load(Rsltfile);
-% h = figure;
-% filename = 'Example neurons activity';
-% subplot(2,1,1); hold on;
-% lg = [];
-% lg(1) = plot(time/1000, Smpl.ExctgE(:,1), 'k-');
-% lg(2) = plot(time/1000, Smpl.ExctgI(:,1), 'k--');
-% lg(3) = plot(time/1000, Smpl.InhbtgE(:,1), 'r-');
-% lg(4) = plot(time/1000, Smpl.InhbtgI(:,1), 'r--');
-% legend(lg, {'gE on Exct cell','gI on Exct cell', 'gE on Inhbt cell','gI on Inhbt cell'}, 'Location','best');
-% xlim([0 duration/1000]);
-% xlabel('Time (s)');
-% ylabel('Conductance (nS)');
-% title('Synaptic activity');
-% mysavefig(h, filename, plotdir, 12, [8,4], 1);
-% subplot(2,2,3); hold on;
-% lg = [];
-% lg(1) = plot(time, Smpl.ExctgE(:,1), 'k-');
-% lg(2) = plot(time, Smpl.ExctgI(:,1), 'k--');
-% lg(3) = plot(time, Smpl.InhbtgE(:,1), 'r-');
-% lg(4) = plot(time, Smpl.InhbtgI(:,1), 'r--');
-% xlim([leftt, leftt+700]);
-% xlabel('Time (ms)');
-% ylabel('Conductance (nS)');
-% title('Synaptic activity');
-% mysavefig(h, filename, plotdir, 12, [8,4], 1);
-% subplot(2,2,4); hold on;
-% lg = [];
-% lg(1) = plot(time, Smpl.ExctV(:,1), 'k-');
-% lg(2) = plot(time, Smpl.InhbtV(:,1), 'r-');
-% legend(lg, {'Exct', 'Inhbt'}, 'Location','best');
-% xlim([leftt, leftt+700]);
-% xlabel('Time (ms)');
-% ylabel('Membrane potential (mV)');
-% title('Activity of a single neuron');
-% mysavefig(h, filename, plotdir, 12, [8, 4], 1);
-% %% Synaptic weights on example neurons
-% h = figure;
-% filename = 'Example synaptic weights';
-% subplot(4,2,1); hold on;
-% lg = [];
-% lg(1) = plot(time/1000, Smpl.xEpre(:,1), 'k-');
-% lg(2) = plot(time/1000, Smpl.xIpre(:,1), 'r-');
-% %lg(3) = plot(time/1000, Exmpl.xEpost, 'k--');
-% %lg(4) = plot(time/1000, Exmpl.xIpost, 'r--');
-% xlim([0 duration/1000]);
-% xlabel('Time (s)');
-% ylabel('Integration');
-% title('STDP Integration');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% subplot(4,2,3); hold on;
-% plot(time/1000, squeeze(Smpl.WEI(:,1,1)), 'k-');
-% xlim([0 duration/1000]);
-% xlabel('Time (s)');
-% ylabel('wEI');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% subplot(4,2,5); hold on;
-% plot(time/1000, squeeze(Smpl.WIE(:,1,1)), 'r-');
-% xlim([0 duration/1000]);
-% xlabel('Time (s)');
-% ylabel('wIE');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% subplot(4,2,7); hold on;
-% plot(time/1000, squeeze(Smpl.WEE(:,2,1)), 'k--');
-% xlim([0 duration/1000]);
-% xlabel('Time (s)');
-% ylabel('wEE');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% subplot(4,2,2); hold on;
-% lg = [];
-% lg(1) = plot(time, Smpl.xEpre(:,1), 'k-');
-% lg(2) = plot(time, Smpl.xIpre(:,1), 'r-');
-% % lg(3) = plot(time, Exmpl.xEpost(1,:), 'k--');
-% % lg(4) = plot(time, Exmpl.xIpost(1,:), 'r--');
-% legend(lg, {'xE', 'xI'}, 'Location','best');
-% xlim([leftt leftt+700]);
-% xlabel('Time (ms)');
-% ylabel('Integration');
-% title('STDP Integration');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% subplot(4,2,4); hold on;
-% plot(time, squeeze(Smpl.WEI(:,1,1)), 'k-');
-% legend('WEI', 'Location','best');
-% xlim([leftt leftt+700]);
-% xlabel('Time (ms)');
-% ylabel('wEI');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% subplot(4,2,6); hold on;
-% plot(time, squeeze(Smpl.WIE(:,1,1)), 'r-');
-% legend('WIE', 'Location','best');
-% xlim([leftt leftt+700]);
-% xlabel('Time (ms)');
-% ylabel('wIE');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-% subplot(4,2,8); hold on;
-% plot(time, squeeze(Smpl.WEE(:,2,1)), 'k--');
-% legend('WEE', 'Location','best');
-% xlim([leftt leftt+700]);
-% xlabel('Time (ms)');
-% ylabel('wEE');
-% mysavefig(h, filename, plotdir, 12, [8,8], 1);
-
 %% visualize weight change
 h = figure;
 filename = sprintf('WEI_change_%1.1fs', duration/1000);
@@ -417,10 +310,9 @@ xlabel("Exct neurons");
 ylabel("Exct neurons");
 mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
 
-%% 
-% SynpseDynamics;
+%% Overall tuning
 EvalTuning1D(Ntwk,WEE,WEI,WIE,OKeeffe,plotdir);
 %% Save results
 % close all;
-% clearvars -except 'Ntwk' 'Seq' 'Exmpl' 'WEI' 'WIE' 'WEE' 'Rsltfile';
+% clearvars -except 'Ntwk' 'Seq' 'Smpl' 'WEI' 'WIE' 'WEE' 'Rsltfile';
 

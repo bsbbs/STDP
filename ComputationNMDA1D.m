@@ -14,6 +14,8 @@ end
 %% load Ntwk file and trained weights
 Ntwkfile = fullfile(plotdir, 'Ntwk.mat');
 load(Ntwkfile);
+Rsltfile = fullfile(plotdir,'Rslts.mat');
+load(Rsltfile);
 if evi >=1
     filename = sprintf('RealtimeMonitor_Event%i', evi);
     load(fullfile(plotdir, [filename, '.mat']));
@@ -22,59 +24,16 @@ else
     WIE = Ntwk.wIE_initial;
     WEE = Ntwk.wEE_initial;
 end
-%% Visualize connection and pools of samples
-Sum1 = sum(Ntwk.wInput(:, Ntwk.Input.Origins == 1), 2);
-Sum2 = sum(Ntwk.wInput(:, Ntwk.Input.Origins == 2), 2);
+% EvalTuning1D(Ntwk,WEE,WEI,WIE,OKeeffe,plotdirintersect);
+%% target the tuning neurons
 Cnnct1 = sum(Ntwk.Cnnct_Input(:, Ntwk.Input.Origins == 1), 2);
 Cnnct2 = sum(Ntwk.Cnnct_Input(:, Ntwk.Input.Origins == 2), 2);
-h = figure;
-filename = 'Inputtuning_individualE';
-plot(Sum1, Sum2, '.', 'MarkerSize', 2);
-xlabel('Tuning weight to Input 1');
-ylabel('Tuning weight to Input 2');
-mysavefig(h, filename, plotdirintersect, 12, [2.5, 2.2161], 1);
-
-Mat = [sum(~Cnnct1 & ~Cnnct2), sum(Cnnct1 & ~Cnnct2);
-    sum(Cnnct2 & ~Cnnct1), sum(Cnnct1 & Cnnct2)];
-h = figure;
-filename = 'InputTuningNneurons';
-imagesc(Mat);
-set(gca, 'YDir', 'normal');
-colormap('gray');
-for i = 1:2
-    for j = 1:2
-    text(i,j, sprintf('%i',Mat(j,i)),'Color','r');
-    end
-end
-ylabel('Tuning to Input 2');
-xlabel('Tuning to Input 1');
-mysavefig(h, filename, plotdirintersect, 12, [2.5, 2.2161]); 
-
-h = figure; hold on;
-filename = 'InputTuning2D';
-scatter(Ntwk.Exct.Location(:,1), Ntwk.Exct.Location(:,2), 3, Sum1, 'filled', 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0.5);
-scatter(Ntwk.Exct.Location(:,1), Ntwk.Exct.Location(:,2), 3, -Sum2, 'filled', 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0.5);
-colormap(bluewhitered(256));
-c = colorbar;
-c.Label.String = 'Tuning weights';
-c.Location = 'northoutside';
-xlabel('x (\mum)');
-ylabel('y (\mum)');
-mysavefig(h, filename, plotdirintersect, 12, [5, 3], 0);
-
-h = figure; hold on;
-filename = 'InputTuning2DSlcted';
+Cnnct = sum(Ntwk.Cnnct_Input, 2);
+InhbtCnnct = Ntwk.Cnnct_EI*Cnnct;
 TuneMask1 = Cnnct1 & ~Cnnct2;
 TuneMask2 = ~Cnnct1 & Cnnct2;
-scatter(Ntwk.Exct.Location(TuneMask1,1), Ntwk.Exct.Location(TuneMask1,2), 3, Sum1(TuneMask1), 'filled', 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0.5);
-scatter(Ntwk.Exct.Location(TuneMask2,1), Ntwk.Exct.Location(TuneMask2,2), 3, -Sum2(TuneMask2), 'filled', 'MarkerFaceAlpha', 0.5, 'MarkerEdgeAlpha', 0.5);
-colormap(bluewhitered(256));
-c = colorbar;
-c.Label.String = 'Tuning weights';
-c.Location = 'northoutside';
-xlabel('x (\mum)');
-ylabel('y (\mum)');
-mysavefig(h, filename, plotdirintersect, 12, [5, 3], 0);
+TuneMask = Cnnct > 3;
+TuneMaskInhbt = InhbtCnnct > 200;
 %% define the input values and sequence for testing purpose only
 % Seqfile = fullfile(plotdir, 'SeqTest.mat');
 % TestN = 16;
@@ -104,7 +63,7 @@ mysavefig(h, filename, plotdirintersect, 12, [5, 3], 0);
 % yticks([1:2]);
 % mysavefig(h, filename, plotdir, 12, [4,2], .1);
 
-duration = 1000; % ms
+duration = 600; % ms
 time = [dt:dt:duration]';
 timesteps = numel(time);
 % test the network
@@ -152,20 +111,22 @@ for v1i = 1:numel(V1vec)
             SpkTrnI = nan(Ntwk.Inhbt.N+1,bankwidth); tickI = 0;
             h1 = figure; hold on;
             xlabel('Time (ms)');
-            ylabel('Neurons');
-            ylim([1, Ntwk.Exct.N]);
-            title('Raster plot of Exct/Inhbt neurons');
+            ylabel('x (\mum)');
+            ylim([-Ntwk.XScale, Ntwk.XScale]);
+            % ylim([1, Ntwk.Exct.N]);
+            % title('Raster plot of Exct/Inhbt neurons');
             ExctVec = 1:Ntwk.Exct.N;
             InhbtVec = [1:Ntwk.Inhbt.N]*4;
             % Output variables
             MeanFR = [];
+            MeanFREI = [];
             timevec = [];
             for t = 1:(timesteps-1)
                 % input spikes
                 InputSpikes = gpuArray.rand(Ntwk.Input.N,1);
                 % InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < spikeProbability*Seq(t,1);
                 % InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < spikeProbability*Seq(t,2);
-                if t*dt <= 1000
+                if t*dt <= 550 && t*dt >= 50
                     InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < Ntwk.Input.spikeProbability*V1;
                     InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < Ntwk.Input.spikeProbability*V2;
                 else
@@ -181,7 +142,7 @@ for v1i = 1:numel(V1vec)
                     ExctgAMPA = ExctgAMPA + Ntwk.Synapse.gbarE*Ntwk.wInput*InputSpikes;
                     InputxNMDAi = InputxNMDAi + InputSpikes;
                 end
-                DlyEspikes = SpkTrnE(2:end,SpkTrnE(1,:) == t - Ntwk.Delay.EE/dt);
+                DlyEspikes = SpkTrnE(2:end,SpkTrnE(1,:) == t - round(Ntwk.Delay.EE/dt));
                 if ~isempty(DlyEspikes)
                     ExctgAMPA = ExctgAMPA + Ntwk.Synapse.gbarE*WEE*DlyEspikes;
                     ExNMDAi = ExNMDAi + DlyEspikes;
@@ -192,7 +153,7 @@ for v1i = 1:numel(V1vec)
 
                 % GABA on excitatory neurons
                 ExctgGABA = ExctgGABA - ExctgGABA/Ntwk.Synapse.tauInhbt*dt; % inhibitory synaptic conductance on Exct neurons
-                DlyIspikes = SpkTrnI(2:end,SpkTrnI(1,:) == t - Ntwk.Delay.IE/dt);
+                DlyIspikes = SpkTrnI(2:end,SpkTrnI(1,:) == t - round(Ntwk.Delay.IE/dt));
                 if ~isempty(DlyIspikes)
                     ExctgGABA = ExctgGABA + Ntwk.Synapse.gbarI*WIE*DlyIspikes;
                 end
@@ -200,7 +161,7 @@ for v1i = 1:numel(V1vec)
                 % AMPA and NMDA on inhibitory neurons
                 InhbtgAMPA = InhbtgAMPA - InhbtgAMPA/Ntwk.Synapse.tauExct*dt; % AMPA on Inhbt neurons
                 IxNMDAi = IxNMDAi + (-IxNMDAi/Ntwk.Synapse.NMDA.taurise)*dt; % NMDA from Exct neurons, targetting inhibitory neurons
-                DlyEspikes = SpkTrnE(2:end, SpkTrnE(1,:) == t - Ntwk.Delay.EI/dt);
+                DlyEspikes = SpkTrnE(2:end, SpkTrnE(1,:) == t - round(Ntwk.Delay.EI/dt));
                 if ~isempty(DlyEspikes)
                     InhbtgAMPA = InhbtgAMPA + Ntwk.Synapse.gbarE*(WEI*DlyEspikes);
                     IxNMDAi = IxNMDAi + DlyEspikes;
@@ -240,6 +201,7 @@ for v1i = 1:numel(V1vec)
                 InhbtV = InhbtV + dV;
                 InhbtV(InhbtRefraction>0) = Ntwk.Vreset;
                 InhbtRefraction = InhbtRefraction - 1;
+
                 % Inhbt neurons fire
                 Ispikes = InhbtV > Ntwk.Vth;
                 if any(Ispikes)
@@ -251,12 +213,15 @@ for v1i = 1:numel(V1vec)
                 end
                 InhbtV(Ispikes) = Ntwk.Vfire;
                 InhbtRefraction(Ispikes) = refractionPeriod.I;
-
-                plot(time(t)*ones(sum(Espikes),1), ExctVec(Espikes), 'k.', 'MarkerSize', 2);
-                plot(time(t)*ones(sum(Ispikes),1), InhbtVec(Ispikes), 'r.', 'MarkerSize', 3);
+                
+                plot(time(t)*ones(sum(Espikes),1), Ntwk.Exct.Location(Espikes,1), 'k.', 'MarkerSize', 2);
+                plot(time(t)*ones(sum(Ispikes),1), Ntwk.Inhbt.Location(Ispikes,1), 'r.', 'MarkerSize', 3);
+                % plot(time(t)*ones(sum(Ispikes),1), InhbtVec(Ispikes), 'r.', 'MarkerSize', 3);
                 % Example traces
                 MeanFR(t, 1) = sum(Espikes(TuneMask1))/sum(TuneMask1);
                 MeanFR(t, 2) = sum(Espikes(TuneMask2))/sum(TuneMask2);
+                MeanFREI(t, 1) = sum(Espikes(TuneMask))/sum(TuneMask);
+                MeanFREI(t, 2) = sum(Ispikes(TuneMaskInhbt))/sum(TuneMaskInhbt);
                 timevec = [timevec; t*dt];
                 if mod(t*dt, 10) == 0
                     fprintf('.');
@@ -268,7 +233,7 @@ for v1i = 1:numel(V1vec)
             fprintf('Successfully completed\n');
             mysavefig(h1, filename, plotdirintersect, 12, [4, 4], 1);
             savefig(h1, fullfile(plotdirintersect,[filename, '.fig']));
-            save(fullfile(plotdirintersect, [filename, '.mat']), 'timevec','MeanFR');
+            save(fullfile(plotdirintersect, [filename, '.mat']), 'timevec','MeanFR','MeanFREI');
         else
             load(fullfile(plotdirintersect, [filename, '.mat']));
         end
@@ -281,15 +246,25 @@ for v1i = 1:numel(V1vec)
         xlabel('Time (ms)');
         ylabel('Firing rate (Hz)');
         mysavefig(h, filename, plotdirintersect, 12, [4, 2], 1);
+
+%         h = figure; hold on;
+%         filename = sprintf('MeanFR_EI_Dynmc_V1%1.0fV2%.1f', V1, V2);
+%         [FR, timep] = PSTH(MeanFREI, dt);
+%         plot(timep, FR(:,1),'k-', 'LineWidth', 2);
+%         plot(timep, FR(:,2),'r-', 'LineWidth', 2);
+%         xlabel('Time (ms)');
+%         ylabel('Firing rate (Hz)');
+%         mysavefig(h, filename, plotdirintersect, 12, [4, 2], 1);
         Modulation(v1i,v2i, :) = mean(FR(timep>200 & timep<1000,:),1);
     end
 end
+%%
 h = figure; 
 filename = 'ModulationEffect';
-mygray = gray(numel(V1vec)+1);
+mygray = flip(gray(numel(V1vec)+1));
 subplot(1,2,1);hold on; % direct effect
 for v1i = 1:numel(V1vec)
-    plot(V2vec,Modulation(v1i,:,2), 'k.', 'Color', mygray(v1i,:), 'MarkerSize', 8);
+    plot(V2vec,Modulation(v1i,:,2), 'k.', 'Color', mygray(v1i+1,:), 'MarkerSize', 8);
 end
 legend({'V_1 = 0.5','V_1 = 1.0','V_1 = 1.5','V_1 = 2.0'},'Location','best');
 ylabel('Mean firing rate (Hz)');
@@ -297,9 +272,136 @@ xlabel('V_2 (a.u.)');
 mysavefig(h, filename, plotdirintersect, 12, [6, 2.5], 1);
 subplot(1,2,2);hold on; % context effect
 for v1i = 1:numel(V1vec)
-    plot(V2vec,Modulation(v1i,:,1), 'k.', 'Color', mygray(v1i,:), 'MarkerSize', 8);
+    plot(V2vec,Modulation(v1i,:,1), 'k.', 'Color', mygray(v1i+1,:), 'MarkerSize', 8);
 end
 %legend('V_1 = 1');
 ylabel('Mean firing rate (Hz)');
 xlabel('V_2 (a.u.)');
 mysavefig(h, filename, plotdirintersect, 12, [6, 2.5], 1);
+%% Model fit to the modulation effect
+[V2mtx, V1mtx] = meshgrid(V2vec,1);
+V2vecp = [0:.05:2];
+[V2mtxp, V1mtxp] = meshgrid(V2vecp,1);
+% [V2mtx, V1mtx] = meshgrid(V2vec,V1vec);
+data = Modulation(2,:,1);
+Comparisons = [];
+Rslts = table('Size', [0 10], 'VariableTypes', {'uint8', 'string', 'double', 'double', 'double', 'double', 'double', 'double', 'double', 'double'},...
+    'VariableNames', {'modeli', 'name', 'Mp', 'w1p', 'w2p', 'a', 'b1', 'b2', 'RSS', 'rsqrd'});
+for modeli = 1:3
+    if modeli == 1
+        % divisive normalization
+        modelname = 'DNM';
+        RSSfun = @(params) DNM(params, data, V1mtx, V2mtx);
+        % M, w1, w2
+        PLB = [0, 0, 0]; % soft boundaries
+        PUB = [1, 1, 1];
+        x0 = rand(1, numel(PLB)).*(PUB - PLB) + PLB;
+    elseif modeli == 2
+        % linear subtraction
+        modelname = 'LnSbtrct';
+        RSSfun = @(params) LnSbtrct(params, data, V1mtx, V2mtx);
+        % a, b1, b2
+        PLB = [-5, 0, -5]; % soft boundaries
+        PUB = [15, 15, 1];
+        x0 = rand(1, numel(PLB)).*(PUB - PLB) + PLB;
+    elseif modeli == 3
+        % mixed
+        modelname = 'Mixed';
+        RSSfun = @(params) Mixed(params, data, V1mtx, V2mtx);
+        % M, w1, w2, b
+        PLB = [0, 0, 0, -10]; % soft boundaries
+        PUB = [1, 1, 1, 10];
+        x0 = rand(1, numel(PLB)).*(PUB - PLB) + PLB;
+    end
+    [fvalbest, ~, ~] = RSSfun(x0);
+    fprintf('test succeeded\n');
+    %%
+    x0 = rand(1, numel(PLB)).*(PUB - PLB) + PLB;
+    x = fmincon(RSSfun, x0);
+    [RSS, rsqrd, Predicted] = eval([modelname, '(x, data, V1mtx, V2mtx)']);
+    if modeli == 1
+        new_row = table(modeli, {modelname}, x(1), x(2), x(3), nan,nan,nan, RSS, rsqrd, 'VariableNames', Rslts.Properties.VariableNames);
+        tmp = (V1mtxp.^2)./(x(1) + x(2)*(V1mtxp.^2) + x(3)*(V2mtxp.^2));
+        tmp(tmp<0) = 0;
+    elseif modeli == 2
+        new_row = table(modeli, {modelname}, nan,nan,nan, x(1), x(2), x(3), RSS, rsqrd, 'VariableNames', Rslts.Properties.VariableNames);
+        tmp = x(1) + x(2)*V1mtxp + x(3)*V2mtxp;
+        tmp(tmp<0) = 0;
+    elseif modeli == 3
+        new_row = table(modeli, {modelname}, x(1), x(2), x(3), nan,nan, x(4), RSS, rsqrd, 'VariableNames', Rslts.Properties.VariableNames);
+        alpha = 1;
+        tmp = (V1mtxp.^alpha)./(x(1) + x(2)*(V1mtxp.^alpha) + x(3)*(V2mtxp.^alpha)) + x(4)*(V2mtxp.^alpha);
+        tmp(tmp<0) = 0;
+    end
+    Comparisons(modeli,:) = tmp;
+    Rslts = [Rslts; new_row];
+    writetable(Rslts, fullfile(plotdirintersect, 'ModelFitRslts.txt'), 'Delimiter', '\t');
+    %%
+    h = figure; hold on; % direct effect
+    filename = sprintf('ModelPrediction_%s', modelname);
+    mygray = flip(gray(numel(V1vec)+1));
+    %for v1i = 2%1:numel(V1vec)
+        plot(V2vec, data, 'k.', 'MarkerSize', 8);
+        plot(V2vec, Predicted, 'k-', 'LineWidth', 1)
+    %end
+    legend(sprintf("r^2 = %0.3f", rsqrd), 'Location', 'best');
+    % text(sprintf("r^2 = %0.3f", rsqrd));
+    ylabel('Mean firing rate (Hz)');
+    xlabel('V_2 (a.u.)');
+    mysavefig(h, filename, plotdirintersect, 12, [3, 2.5], 1);
+end
+
+
+%% Model comparison
+h = figure; hold on; % direct effect
+filename = sprintf('ModelPrediction_Compare');
+lg = [];
+lg(1) = plot(V2vec, data, 'k.', 'MarkerSize', 8);
+lg(2) = plot(V2vecp, Comparisons(1,:), '-', 'LineWidth', 1);
+lg(3) = plot(V2vecp, Comparisons(2,:), '-', 'LineWidth', 1);
+legend(lg, {'Data','Divisive normalization','Linear Subtraction'}, 'Location', 'best');
+ylim([0,14]);
+ylabel('Mean firing rate (Hz)');
+xlabel('V_2 (a.u.)');
+mysavefig(h, filename, plotdirintersect, 12, [3, 2.5], 1);
+
+%%
+function [RSS, rsqrd, Predicted] = DNM(params, data, V1mtx, V2mtx) 
+M = params(1);
+w1 = params(2);
+w2 = params(3);
+alpha = 2; % params(4);
+Predicted = (V1mtx.^alpha)./(M + w1*(V1mtx.^alpha) + w2*(V2mtx.^alpha));
+Predicted(Predicted<0) = 0;
+% residual sum of squares
+RSS = sum((data - Predicted).^2, 'all');
+% r-squared
+rsqrd = 1 - (RSS/sum((data - mean(data(:))).^2, 'all'));
+end
+
+function [RSS, rsqrd, Predicted] = LnSbtrct(params, data, V1mtx, V2mtx) 
+a = params(1);
+b1 = params(2);
+b2 = params(3);
+alpha = 1; % params(4);
+Predicted = a + b1*V1mtx.^alpha + b2*V2mtx.^alpha;
+Predicted(Predicted<0) = 0;
+% residual sum of squares
+RSS = sum((data - Predicted).^2, 'all');
+% r-squared
+rsqrd = 1 - (RSS/sum((data - mean(data(:))).^2, 'all'));
+end
+
+function [RSS, rsqrd, Predicted] = Mixed(params, data, V1mtx, V2mtx) 
+M = params(1);
+w1 = params(2);
+w2 = params(3);
+b = params(4);
+alpha = 1; %params(4);
+Predicted = (V1mtx.^alpha)./(M + w1*(V1mtx.^alpha) + w2*(V2mtx.^alpha)) + b*(V2mtx.^alpha);
+Predicted(Predicted<0) = 0;
+% residual sum of squares
+RSS = sum((data - Predicted).^2, 'all');
+% r-squared
+rsqrd = 1 - (RSS/sum((data - mean(data(:))).^2, 'all'));
+end

@@ -1,10 +1,14 @@
 %% define I/O
 DefineIO1D;
-% Define time vector, check input sequences
+
+%% Setup for visualization etc
+Setup;
+%% Define time vector, check input sequences
 dt = .1; % ms, time precision for simulation, in unit of second
+dt = 1;
 % Spike train of the input, example trials
 Ntrial = 1600;
-ProjectName = sprintf('ASyncNMDA1D100_%i', Ntrial);
+ProjectName = sprintf('ASyncNMDA1D100dt1_%i', Ntrial);
 plotdir = fullfile(Projdir, ProjectName);
 if ~exist(plotdir,'dir')
     mkdir(plotdir);
@@ -38,9 +42,9 @@ axis([0, time(end)/1000, .5, 2*1.45]); % Adjust the axis for better visualizatio
 % ylim([.5, Ntwk.Input.Source*1.45]);
 yticks([1:2]);
 %close(h);
-% runner
+%% runner
 RunnerNMDA1D;
-% Evaluation
+%% Evaluation
 ChecktheTestNMDA1D;
 ComputationNMDA1D;
 
