@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=Sync
 #SBATCH --mem=60G
-#SBATCH --time=2-00:00:00
+#SBATCH --time=7-00:00:00
 #SBATCH --tasks=1
 #SBATCH --cpus-per-task=10
 #SBATCH --nodes=1
@@ -13,5 +13,5 @@ cd ~/STDP
 module purge
 module load cuda/10.2.89
 module load matlab/2021b
-matlab -nodisplay -r MainDualSync_PeriodicGPU
+matlab -nodisplay -r MainSyncNMDA1D
 

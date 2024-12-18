@@ -3,7 +3,7 @@ if strcmp(os,'MACI64')
     Projdir = '/Users/bs3667/Dropbox (NYU Langone Health)/Bo Shen Working files/STDP_Project/Analyses';
     Gitdir = '~/STDP';
 elseif strcmp(os,'GLNXA64')
-    % Projdir = '/gpfs/data/glimcherlab/BoShen/STDP_Project';
+    % Projdir = '/gpfs/data/glimcherlab/BoShen/STDP_Project/Analyses';
     % Gitdir = '/gpfs/data/glimcherlab/BoShen/STDP';
     Projdir = '/scratch/bs3667/STDP_Project/Analyses';
     Gitdir = '/home/bs3667/STDP';

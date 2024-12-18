@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=Async
 #SBATCH --mem=60G
-#SBATCH --time=2-00:00:00
+#SBATCH --time=7-00:00:00
 #SBATCH --tasks=1
 #SBATCH --cpus-per-task=10
 #SBATCH --nodes=1
