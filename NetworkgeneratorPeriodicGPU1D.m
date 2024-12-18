@@ -1,13 +1,13 @@
 Ntwkfile = fullfile(gnrloutdir, 'NtwkNMDA.mat');
 if ~exist(Ntwkfile, 'file')
     %% The structure of the network
-    Ntwk.XScale = 500; % um, range of the x axis
+    Ntwk.XScale = 150; % um, range of the x axis
     Ntwk.YScale = 50; % um, range of the y axis
     Ntwk.Exct.Location = []; % the physical location of excitatory cells
-    Ntwk.Exct.N = 2400; % number of the excitarory cells
+    Ntwk.Exct.N = 2000; % number of the excitarory cells
     Ntwk.Exct.AxonRange = 130; 
     Ntwk.Inhbt.Location = [];
-    Ntwk.Inhbt.N = 600;
+    Ntwk.Inhbt.N = 500;
     Ntwk.Inhbt.AxonRange = 97; % um, the standard deviation of axon physical connection range for interneurons
     Ntwk.AxonRange.EE = 130; % um, standard deviation of Gaussian decay of connection probability over somatic distance of E and E
     Ntwk.AxonRange.EI = 100; % um, standard deviation of Gaussian decay of connection probability over somatic distance of E and I 
@@ -47,7 +47,7 @@ if ~exist(Ntwkfile, 'file')
     Ntwk.Synapse.gbarI = 31.5; % original value .35 nS
     %% Spike-timing dependent plasticity
     % time constant of synaptic plasticity for pre-post and post-pre kernels
-    Ntwk.A = .001; % the maximum amplitude change on the synapctic plasticity for each pair of spikes
+    Ntwk.A = .01; % the maximum amplitude change on the synapctic plasticity for each pair of spikes
     Ntwk.Synapse.tau_prepost = 20; % ms
     Ntwk.STDP.tau_postpre = 20; % ms
     Ntwk.ExctSTDP.tau_prepost = 20; % ms
@@ -92,7 +92,9 @@ if ~exist(Ntwkfile, 'file')
     % possible synaptic connection from E -> I
     [XE, XI] = meshgrid(Ntwk.Exct.Location(:,1), Ntwk.Inhbt.Location(:,1)); % rows represent Inhbt and columns represent Exct
     [YE, YI] = meshgrid(Ntwk.Exct.Location(:,2), Ntwk.Inhbt.Location(:,2));
-    DstcEI = sqrt(min(Ntwk.XScale*2-abs(XE - XI), abs(XE - XI)).^2 + min(Ntwk.YScale*2 - abs(YE - YI), abs(YE - YI)).^2); % Euclidean distance between each pair of Exct and Inhbt neurons
+    DstcEI = sqrt((XE - XI).^2 + (YE - YI).^2); % Euclidean distance between each pair of Exct and Inhbt neurons
+    % or periodic
+    % DstcEI = sqrt(min(Ntwk.XScale*2-abs(XE - XI), abs(XE - XI)).^2 + min(Ntwk.YScale*2 - abs(YE - YI), abs(YE - YI)).^2); % Euclidean distance between each pair of Exct and Inhbt neurons
     p_EI = Ntwk.CnnctProb.EI*exp(-.5*(DstcEI/Ntwk.AxonRange.EI).^2); %1 - (1 - exp(-DstcEI/Ntwk.Exct.AxonRange)).^4; % probability of physical connection from E to I based on distance
     gpurng(2007);
     Ntwk.Cnnct_EI = p_EI >= gpuArray.rand(size(p_EI)); % connections from E to I, 0 or 1
@@ -100,7 +102,9 @@ if ~exist(Ntwkfile, 'file')
     % possible synaptic connection from I -> E
     [XI, XE] = meshgrid(Ntwk.Inhbt.Location(:,1), Ntwk.Exct.Location(:,1)); % rows represent Exct and columns represent Inhbt
     [YI, YE] = meshgrid(Ntwk.Inhbt.Location(:,2), Ntwk.Exct.Location(:,2));
-    DstcIE = sqrt(min(Ntwk.XScale*2 - abs(XI - XE), abs(XI - XE)).^2 + min(Ntwk.YScale*2 - abs(YI - YE), abs(YI - YE)).^2); % Euclidean distance between each pair of Inhbt and Exct neurons
+    DstcIE = sqrt((XI - XE).^2 + (YI - YE).^2); % Euclidean distance between each pair of Inhbt and Exct neurons
+    % or periodic
+    % DstcIE = sqrt(min(Ntwk.XScale*2 - abs(XI - XE), abs(XI - XE)).^2 + min(Ntwk.YScale*2 - abs(YI - YE), abs(YI - YE)).^2); % Euclidean distance between each pair of Inhbt and Exct neurons
     p_IE = Ntwk.CnnctProb.IE*exp(-.5*(DstcIE/Ntwk.AxonRange.IE).^2); % probability of connection from I to E based on distance
     gpurng(2008);
     Ntwk.Cnnct_IE = p_IE >= gpuArray.rand(size(p_IE)); % connections from I to E, 0 or 1
@@ -108,7 +112,9 @@ if ~exist(Ntwkfile, 'file')
     % possible synaptic connection from E -> E
     [XE1, XE2] = meshgrid(Ntwk.Exct.Location(:,1), Ntwk.Exct.Location(:,1));
     [YE1, YE2] = meshgrid(Ntwk.Exct.Location(:,2), Ntwk.Exct.Location(:,2));
-    DstcEE = sqrt(min(Ntwk.XScale*2-abs(XE1 - XE2), abs(XE1 - XE2)).^2 + min(Ntwk.YScale*2 - abs(YE1 - YE2), abs(YE1 - YE2)).^2); %  Euclidean distance between each pair of Exct neurons
+    DstcEE = sqrt((XE1 - XE2).^2 + (YE1 - YE2).^2); %  Euclidean distance between each pair of Exct neurons
+    % or periodic
+    % DstcEE = sqrt(min(Ntwk.XScale*2-abs(XE1 - XE2), abs(XE1 - XE2)).^2 + min(Ntwk.YScale*2 - abs(YE1 - YE2), abs(YE1 - YE2)).^2); %  Euclidean distance between each pair of Exct neurons
     p_EE = Ntwk.CnnctProb.EE*exp(-.5*(DstcEE/Ntwk.AxonRange.EE).^2); % probability of connection from E to E based on distance
     gpurng(2009);
     Ntwk.Cnnct_EE = p_EE >= gpuArray.rand(size(p_EE)); % connections from E to E, 0 or 1
@@ -116,7 +122,7 @@ if ~exist(Ntwkfile, 'file')
     % possible synaptic connection from I -> I was not assumed since we do
     % not assume disinhibition in the current interneuronal type (PV like neurons)
     %% Visualization
-    downsmpl = 1;
+    downsmpl = 10;
     Ntwk.Smpl.E = Ntwk.Exct.N/4;
     Ntwk.Smpl.I = round(Ntwk.Inhbt.N*2/3)-12;
     if show
@@ -125,12 +131,15 @@ if ~exist(Ntwkfile, 'file')
         hold on;
         plot(Ntwk.Exct.Location(1:downsmpl:Ntwk.Exct.N,1), Ntwk.Exct.Location(1:downsmpl:Ntwk.Exct.N,2), 'k^', 'MarkerSize', 4, 'MarkerFaceColor','auto');
         plot(Ntwk.Inhbt.Location(1:round(downsmpl/Ntwk.Exct.N*Ntwk.Inhbt.N):Ntwk.Inhbt.N,1),...
-            Ntwk.Inhbt.Location(1:round(downsmpl/Ntwk.Exct.N*Ntwk.Inhbt.N):Ntwk.Inhbt.N,2), '.', 'Color', 'r', 'MarkerSize', 4);
+            Ntwk.Inhbt.Location(1:round(downsmpl/Ntwk.Exct.N*Ntwk.Inhbt.N):Ntwk.Inhbt.N,2), '.', 'Color', 'r', 'MarkerSize', 10);
         xlabel('x (\mum)');
         ylabel('y (\mum)');
+        axis equal;
         xlim([-Ntwk.XScale, Ntwk.XScale]);
         ylim([-Ntwk.YScale, Ntwk.YScale]);
-   
+        mysavefig(h, filename, gnrloutdir, 14, [4, 2], 2);
+
+        filename = 'Network structure - Example EIs';
         EIs = find(Ntwk.Cnnct_EI(:, Ntwk.Smpl.E));
         for i = EIs'
             lgd1 = plot([Ntwk.Exct.Location(Ntwk.Smpl.E,1), Ntwk.Inhbt.Location(i,1)],...
@@ -147,7 +156,7 @@ if ~exist(Ntwkfile, 'file')
         end
         % plot(Ntwk.Inhbt.Location(IEs,1), Ntwk.Inhbt.Location(IEs,2), '.', 'Color', OKeeffe(7,:), 'MarkerSize', Ntwk.Inhbt.Properties.size);
         legend([lgd1, lgd2], {'E to I','I to E'});
-        mysavefig(h, filename, gnrloutdir, 14, [5, 1.20], 2);
+        mysavefig(h, filename, gnrloutdir, 14, [4, 2], 2);
         clear EIs IEs i;
     end
     %% Synaptic weights for those possible connections defined above
@@ -160,33 +169,48 @@ if ~exist(Ntwkfile, 'file')
     if show
         h = figure;
         filename = 'wEE_initial';
-        imagesc(Ntwk.wEE_initial);
+        imagesc(Ntwk.Exct.Location(:,1), Ntwk.Exct.Location(:,1), Ntwk.wEE_initial);
         caxis([0, .1]);
         colormap(bluewhitered(256));
         c = colorbar;
         c.Label.String = 'Initial synaptic weights';
         c.Location = 'northoutside';
-        xlabel('Exct channels');
-        ylabel('Exct channels');
-        mysavefig(h, filename, gnrloutdir, 12, [2.5, 2.81]); % [4, 3] % [3.2, 3.6]
+        xlabel('X-axis of E (\mum)');
+        ylabel('X-axis of E (\mum)');
+        axis equal;
+        xlim([-Ntwk.XScale, Ntwk.XScale]);
+        ylim([-Ntwk.XScale, Ntwk.XScale]);
+        mysavefig(h, filename, gnrloutdir, 12, [4, 2]); % [4, 3] % [3.2, 3.6]
 
         h = figure;
         filename = 'wEI_initial';
-        imagesc(Ntwk.wEI_initial);
+        imagesc(Ntwk.Exct.Location(:,1), Ntwk.Inhbt.Location(:,1), Ntwk.wEI_initial);
         caxis([0, .1]);
         colormap(bluewhitered(256));
-        xlabel('Exct channels');
-        ylabel('Inhbt channels');
-        mysavefig(h, filename, gnrloutdir, 12, [2.5, 2.2161]);
+        c = colorbar;
+        c.Label.String = 'Initial synaptic weights';
+        c.Location = 'northoutside';
+        xlabel('X-axis of E (\mum)');
+        ylabel('X-axis of I (\mum)');
+        axis equal;
+        xlim([-Ntwk.XScale, Ntwk.XScale]);
+        ylim([-Ntwk.XScale, Ntwk.XScale]);
+        mysavefig(h, filename, gnrloutdir, 12, [4, 2]);
 
         h = figure;
         filename = 'wIE_initial';
-        imagesc(Ntwk.wIE_initial);
+        imagesc(Ntwk.Inhbt.Location(:,1), Ntwk.Exct.Location(:,1), Ntwk.wIE_initial);
         caxis([0, .1]);
         colormap(bluewhitered(256));
-        ylabel('Exct channels');
-        xlabel('Inhbt channels');
-        mysavefig(h, filename, gnrloutdir, 12, [2.5, 2.2161]); % 2.5*149.1848/168.2961
+        c = colorbar;
+        c.Label.String = 'Initial synaptic weights';
+        c.Location = 'northoutside';
+        ylabel('X-axis of E (\mum)');
+        xlabel('X-axis of I (\mum)');
+        axis equal;
+        xlim([-Ntwk.XScale, Ntwk.XScale]);
+        ylim([-Ntwk.XScale, Ntwk.XScale]);
+        mysavefig(h, filename, gnrloutdir, 12, [4, 2]);
     end
     save(Ntwkfile, 'Ntwk');
 else

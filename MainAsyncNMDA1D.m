@@ -8,7 +8,7 @@ dt = .1; % ms, time precision for simulation, in unit of second
 % dt = 1;
 % Spike train of the input, example trials
 Ntrial = 1600;
-ProjectName = sprintf('SyncSmallerPatch_dt%1.1f',dt);
+ProjectName = sprintf('AsyncSmallerPatch_dt%1.1f',dt);
 plotdir = fullfile(Projdir, ProjectName);
 if ~exist(plotdir,'dir')
     mkdir(plotdir);
@@ -19,7 +19,7 @@ if ~exist(Seqfile, 'file')
     % values = ParetoSequence(Ntrial, sigma);
     values = ones(Ntrial,2);
     [Seq, evs] = Generator(Ntrial, values, dt);
-    Seq = Seq(:, [1,2]);
+    Seq = Seq(:, [1,3]);
     % Time vector
     duration = length(Seq)*dt; % ms
     time = [dt:dt:duration]';

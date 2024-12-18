@@ -3,6 +3,7 @@
 Ntwk.Input.Source = 2; % Number of input source(s)
 Ntwk.Input.N = 200*Ntwk.Input.Source; % number of the input (excitarory) neurons
 Ntwk.Input.Tube = 0; % um, the Gaussuan standard deviation of long-range projection area. All input neurons locate in the circle area
+Ntwk.Input.XLoc = [-50, 50]; % The x-axis locations of the two input sources.
 Ntwk.AxonRange.Input = 50; % 130; % um, for each input neuron, the axon connection to the neighbouring E neuron is assumed the same as Gaussian distance delay as E to E
 Ntwk.CnnctProb.Input = .2; % The connection probability from input neurons are set as the same as E to E
 Ntwk.Input.on = .5; % input intervene 50 % of the neurons nearby
@@ -11,7 +12,7 @@ r = gpuArray.randn(Ntwk.Input.N,1)*Ntwk.Input.Tube; % radius of the input fiber 
 gpurng(2025);
 phi = gpuArray.rand(Ntwk.Input.N,1)*2*pi; % angle of the location of the input fiber
 xE = cos(phi).*r;
-tmp = [-Ntwk.XScale, -50, 50, Ntwk.XScale]; % ([0:1/(1+Ntwk.Input.Source):1]-1/2)*Ntwk.XScale*2;
+tmp = [-Ntwk.XScale, Ntwk.Input.XLoc(1), Ntwk.Input.XLoc(2), Ntwk.XScale]; % ([0:1/(1+Ntwk.Input.Source):1]-1/2)*Ntwk.XScale*2;
 shifts = repmat(tmp(2:end-1), Ntwk.Input.N/Ntwk.Input.Source, 1);
 xE = xE + shifts(:);
 yE = -Ntwk.YScale + gpuArray.rand(Ntwk.Input.N,1)*Ntwk.YScale*2; % sin(phi).*r;
@@ -24,7 +25,9 @@ clear xE yE Origins r phi I;
 % connections to the local excitatory neurons
 [XInput, XE] = meshgrid(Ntwk.Input.Location(:,1), Ntwk.Exct.Location(:,1)); % rows represent local and columns represent Input projection
 [YInput, YE] = meshgrid(Ntwk.Input.Location(:,2), Ntwk.Exct.Location(:,2));
-DstcInput = sqrt(min(Ntwk.XScale*2 - abs(XInput - XE), abs(XInput - XE)).^2 + min(Ntwk.YScale*2 - abs(YInput - YE), abs(YInput - YE)).^2); % Euclidean distance between each pair of neurons
+DstcInput = sqrt((XInput - XE).^2 + (YInput - YE).^2); % Euclidean distance between each pair of neurons
+% or periodic
+% DstcInput = sqrt(min(Ntwk.XScale*2 - abs(XInput - XE), abs(XInput - XE)).^2 + min(Ntwk.YScale*2 - abs(YInput - YE), abs(YInput - YE)).^2); % Euclidean distance between each pair of neurons
 p_Input = Ntwk.CnnctProb.Input*exp(-.5*(DstcInput/Ntwk.AxonRange.Input).^2); % probability of physical connection based on distance
 gpurng(2097);
 Ntwk.Cnnct_Input = p_Input >= gpuArray.rand(size(p_Input));
@@ -70,9 +73,21 @@ for i = 1:ceil(tmpsteps/trunck)
     InputSpikes(timevec, Ntwk.Input.Origins == 1) = InputSpikes(timevec, Ntwk.Input.Origins == 1) < spikeProbability*Seq(timevec + leftt/dt,1);
     InputSpikes(timevec, Ntwk.Input.Origins == 2) = InputSpikes(timevec, Ntwk.Input.Origins == 2) < spikeProbability*Seq(timevec + leftt/dt,2);
 end
-
+% Plot the selected input boxcar
+subplot(3,1,2); hold on;
+timevec = 1:(evs(6,1)*1000/dt);
+for ii = Ntwk.Input.Source:-1:1
+    plot(timevec*dt/1000, Seq(timevec,ii)*.9+(ii), '-', "Color", OKeeffe(ii,:), 'LineWidth', 1);
+end
+title('Input signal');
+xlabel('Time (s)');
+ylabel('Channel');
+axis([0 evs(6,1), .5 Ntwk.Input.Source*1.45]); % Adjust the axis for better visualization
+% ylim([.5, Ntwk.Input.Source*1.45]);
+yticks([1:Ntwk.Input.Source]);
+mysavefig(h, filename, plotdir, 12, [3,6], 1);
 % Plot the raster plot
-subplot(3,1,2);
+subplot(3,1,3);
 hold on;
 for n = 1:5:Ntwk.Input.N
     % Find indices where spikes occur

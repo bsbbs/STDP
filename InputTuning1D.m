@@ -1,7 +1,37 @@
 function Ntwk = InputTuning1D(Ntwk, OKeeffe, plotdir)
-%% Input tuning
+%% Input tuning - theoritical
+h = figure;
+filename = 'InputTuning_Theoritical';
+xvec = -Ntwk.XScale:Ntwk.XScale;
+subplot(2,1,1); hold on;
+lgd = [];
+legendLabels = {};
+for i = 1:Ntwk.Input.Source
+    DstcInput = abs(Ntwk.Input.XLoc(i) - xvec); % Euclidean distance between each pair of neurons
+    p_Input = Ntwk.CnnctProb.Input*exp(-.5*(DstcInput/Ntwk.AxonRange.Input).^2); % probability of physical connection based on distance
+    y = p_Input;
+    y2 = zeros(size(y));
+    lgd(i) = plot(xvec, y, 'LineWidth', 2, 'Color', OKeeffe(i,:));
+    fill([xvec fliplr(xvec)], [y fliplr(y2)], OKeeffe(i,:), 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+    legendLabels{i} = sprintf('Input %d', i);
+end
+legend(lgd, legendLabels, 'Location', 'best');
+xlabel('Location x (\mum)');
+ylabel('Coupling %');
+mysavefig(h, filename, plotdir, 12, [2.5, 2.5], 2);
+
+subplot(2,1,2); hold on;
+undersample = 8;
+plot(Ntwk.Exct.Location(1:undersample:end,1), Ntwk.Exct.Location(1:undersample:end,2), 'k^', 'MarkerSize', 3);
+plot(Ntwk.Inhbt.Location(1:undersample:end,1), Ntwk.Inhbt.Location(1:undersample:end,2), 'r.', 'MarkerSize', 5);
+xlabel('Location x (\mum)');
+ylabel('y (\mum)');
+xlim([-Ntwk.XScale, Ntwk.XScale]);
+ylim([-Ntwk.YScale, Ntwk.YScale]);
+mysavefig(h, filename, plotdir, 12, [2.5, 2.5], 2);
+%% Input tuning - Empirical 
 xinterval = Ntwk.XScale/120;
-xwindow = Ntwk.XScale/7;
+xwindow = Ntwk.XScale/40;
 xvec = -Ntwk.XScale:xinterval:Ntwk.XScale;
 Tuning.Input = zeros(Ntwk.Input.Source, numel(xvec));
 for xi = 1:numel(xvec)
@@ -12,7 +42,7 @@ for xi = 1:numel(xvec)
 end
 
 h = figure;
-filename = 'InputTuning';
+filename = 'InputTuning_Empirical';
 subplot(2,1,1); hold on;
 lgd = [];
 legendLabels = {};
@@ -25,24 +55,19 @@ for i = 1:Ntwk.Input.Source
 end
 legend(lgd, legendLabels, 'Location', 'best');
 xlabel('Location x (\mum)');
-ylabel('Coupling (a.u.)');
+ylabel('Coupling (normalized)');
 mysavefig(h, filename, plotdir, 12, [2.5, 2.5], 2);
 
 subplot(2,1,2); hold on;
 undersample = 8;
 plot(Ntwk.Exct.Location(1:undersample:end,1), Ntwk.Exct.Location(1:undersample:end,2), 'k^', 'MarkerSize', 3);
 plot(Ntwk.Inhbt.Location(1:undersample:end,1), Ntwk.Inhbt.Location(1:undersample:end,2), 'r.', 'MarkerSize', 5);
-% for i = 1:Ntwk.Input.Source
-%     Cnncted = any(Ntwk.Cnnct_Input(:,Ntwk.Input.Origins==i),2);
-%     plot(Ntwk.Exct.Location(Cnncted, 1),...
-%         Ntwk.Exct.Location(Cnncted, 2), '.', 'Color', OKeeffe(i,:), 'MarkerSize', 6);
-%     % plot(Ntwk.Input.Location(Ntwk.Input.Origins==i,1), Ntwk.Input.Location(Ntwk.Input.Origins==i,2), '.', 'Color', OKeeffe(i,:), 'MarkerSize', 3);
-% end
 xlabel('Location x (\mum)');
 ylabel('y (\mum)');
 xlim([-Ntwk.XScale, Ntwk.XScale]);
 ylim([-Ntwk.YScale, Ntwk.YScale]);
 mysavefig(h, filename, plotdir, 12, [2.5, 2.5], 2);
+
 %
 filename = 'InputTuningwithExmplNeurons';
 ECnnct1 = sum(Ntwk.Cnnct_Input(:, Ntwk.Input.Origins == 1),2);
