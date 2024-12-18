@@ -1,4 +1,5 @@
 #!/bin/bash
+#SBATCH --partition=v100
 #SBATCH --job-name=Sync
 #SBATCH --mem=60G
 #SBATCH --time=7-00:00:00
