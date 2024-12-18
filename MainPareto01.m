@@ -1,5 +1,7 @@
 %% define I/O
 DefineIO;
+% Setup for visualization etc
+ColorPalette;
 %% Define time vector
 dt = .1; % ms, time precision for simulation, in unit of second
 % Spike train of the input, example trials
