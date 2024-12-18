@@ -13,5 +13,5 @@ cd ~/STDP
 module purge
 module load cuda/10.2.89
 module load matlab/2021b
-matlab -nodisplay -r MainDualAsync_PeriodicGPU
+matlab -nodisplay -r MainAsyncNMDA1D
 
