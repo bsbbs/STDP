@@ -32,5 +32,5 @@ close(h);
 if gpuDeviceCount > 0
     gpuparallel = 1;
 else
-    error("Implementing this code requires GPU");
+    warning("Implementing this code requires GPU");
 end
