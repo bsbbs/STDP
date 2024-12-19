@@ -24,13 +24,13 @@ if ~exist(Testdir, 'dir')
 end
 
 %% Parrellel simulations
-Vals = repmat([.01, .05, .1, .5, 1, 2, 8, 30, 50, 100], 1, 2);
+Vals = repmat([.1, .5, 1, 2, 5, 10, 50], 1, 2);
 evsSync = [evspool(:,1) evspool(:,1)];
 evsAsync = evspool;
 Inputstruct = Ntwk.Input;
-mypool = parpool(20);
-parfor runi = 1:20
-    sessi = ceil(runi/10);
+mypool = parpool(14);
+parfor runi = 1:14
+    sessi = ceil(runi/7);
     if sessi == 1
         Type = 'Sync';
         evs = evsSync;
@@ -40,12 +40,12 @@ parfor runi = 1:20
     end
     % define values
     Val = Vals(runi);
-    Runningdir = fullfile(Testdir, sprintf('%s_Val%3.2f', Type, Val));
+    Runningdir = fullfile(Testdir, sprintf('%s_Val%2.1f', Type, Val));
     if ~exist(Runningdir,'dir')
         mkdir(Runningdir);
     end
-    fprintf('%s, Val = %3.2f\n', Type, Val);
-    valfile = fullfile(Runningdir, sprintf('Seq_%s_Val%3.2f_%itrials.mat', Type, Val, Ntrial));
+    fprintf('%s, Val = %2.1f\n', Type, Val);
+    valfile = fullfile(Runningdir, sprintf('Seq_%s_Val%2.1f_%itrials.mat', Type, Val, Ntrial));
     % sigma = 0;
     % values = ParetoSequence(Ntrial, sigma);
     values = ones(Ntrial,2)*Val;
