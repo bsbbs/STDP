@@ -21,7 +21,7 @@ if ~exist(Seqfile, 'file')
     values = ones(Ntrial,2);
     [SeqPool, evs] = Generator(Ntrial, values, dt);
     duration = length(SeqPool)*dt; % ms
-    time = [dt:dt:duration]';
+    time = (dt:dt:duration)';
     timesteps = numel(time);
     save(Seqfile, 'SeqPool','evs','values','time','duration','timesteps');
 else
@@ -29,12 +29,12 @@ else
 end
 
 %% Parrellel simulations
-ValAmps = [.01, .05, .1, .5, 1, 2, 8, 30, 50, 100];
+ValAmps = repmat([.01, .05, .1, .5, 1, 2, 8, 30, 50, 100],1, 2);
 Seq1 = SeqPool(:, [1, 2]);
 Seq2 = SeqPool(:, [1, 3]);
 mypool = parpool(numel(ValAmps)*2);
 parfor runi = 1:20
-    sessi = ceil(runi/numel(ValAmps));
+    sessi = ceil(runi/10);
     if sessi == 1
         ProjectName = sprintf('Sync');
         Seq = Seq1;
