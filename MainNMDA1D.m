@@ -7,7 +7,7 @@ Ntwk = NetworkgeneratorGPU1D(gnrloutdir, visualize, Mycolors);
 close all;
 
 %% Define input sequences
-Ntrial = 1; % numbers of testing trials
+Ntrial = 1600; % numbers of testing trials
 dt = .1; % ms, time precision for simulation
 evfile = fullfile(gnrloutdir, sprintf('EventsPool%itrials.mat', Ntrial));
 if ~exist(evfile, 'file')
@@ -28,7 +28,7 @@ Vals = repmat([.01, .05, .1, .5, 1, 2, 8, 30, 50, 100], 1, 2);
 evsSync = [evspool(:,1) evspool(:,1)];
 evsAsync = evspool;
 Inputstruct = Ntwk.Input;
-% mypool = parpool(2);
+mypool = parpool(20);
 parfor runi = 1:20
     sessi = ceil(runi/10);
     if sessi == 1
