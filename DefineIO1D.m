@@ -1,5 +1,5 @@
 [os, ~, ~] = computer;
-if strcmp(os,'MACI64')
+if strcmp(os,'MACA64')
     Projdir = '/Users/bs3667/Dropbox (NYU Langone Health)/Bo Shen Working files/STDP_Project/Analyses';
     Gitdir = '~/STDP';
 elseif strcmp(os,'GLNXA64')

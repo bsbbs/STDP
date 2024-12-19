@@ -48,7 +48,7 @@ parfor runi = 1:20
     end
    
     ValAmp = ValAmps(runi);
-    subplotdir = fullfile(plotdir, 'ValAmp%f3.3', ValAmp);
+    subplotdir = fullfile(plotdir, sprintf('ValAmp%3.3f', ValAmp));
     if ~exist(subplotdir,'dir')
         mkdir(subplotdir);
     end
