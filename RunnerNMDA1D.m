@@ -1,10 +1,6 @@
-function [Ntwk, WEI, WIE, WEE] = RunnerNMDA1D(ValAmp, gnrloutdir, plotdir, subplotdir)% Runner
-%% Build the neural network
-show = 1;
-NetworkgeneratorPeriodicGPU1D;
+% function [Ntwk, WEI, WIE, WEE] = RunnerNMDA1D(ValAmp, gnrloutdir, plotdir, subplotdir)% Runner
 
 %% Specify project name and output
-
 Rsltfile = fullfile(subplotdir,'Rslts.mat');
 
 %% Build the Input structure
@@ -315,4 +311,4 @@ EvalTuning1D(Ntwk,WEE,WEI,WIE,OKeeffe,subplotdir);
 %% Save results
 % close all;
 % clearvars -except 'Ntwk' 'Seq' 'Smpl' 'WEI' 'WIE' 'WEE' 'Rsltfile';
-end
+

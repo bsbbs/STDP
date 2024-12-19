@@ -2,41 +2,51 @@
 DefineIO1D;
 % Setup for visualization etc
 ColorPalette;
+%% Build the neural network
+show = 1;
+NetworkgeneratorPeriodicGPU1D;
 
 %% Define time vector, check input sequences
 dt = .1; % ms, time precision for simulation, in unit of second
-% dt = 1;
 % Spike train of the input, example trials
 Ntrial = 1600;
+Testdir = fullfile(Projdir, 'FixedValue');
+if ~exist(Testdir, 'dir')
+    mkdir(Testdir);
+end
+Seqfile = fullfile(Testdir, 'SeqPool.mat');
+if ~exist(Seqfile, 'file')
+    % sigma = 0;
+    % values = ParetoSequence(Ntrial, sigma);
+    values = ones(Ntrial,2);
+    [SeqPool, evs] = Generator(Ntrial, values, dt);
+    duration = length(SeqPool)*dt; % ms
+    time = [dt:dt:duration]';
+    timesteps = numel(time);
+    save(Seqfile, 'SeqPool','evs','values','time','duration','timesteps');
+else
+    load(Seqfile);
+end
+
+%% Parrellel simulations
 ValAmps = [.01, .05, .1, .5, 1, 2, 8, 30, 50, 100];
+Seq1 = SeqPool(:, [1, 2]);
+Seq2 = SeqPool(:, [1, 3]);
 mypool = parpool(numel(ValAmps)*2);
 parfor runi = 1:20
     sessi = ceil(runi/numel(ValAmps));
     if sessi == 1
         ProjectName = sprintf('Sync');
+        Seq = Seq1;
     elseif sessi == 2
         ProjectName = sprintf('Async');
+        Seq = Seq2;
     end
-    plotdir = fullfile(Projdir, ProjectName);
+    plotdir = fullfile(Testdir, ProjectName);
     if ~exist(plotdir,'dir')
         mkdir(plotdir);
     end
-    Seqfile = fullfile(plotdir, 'Seq.mat');
-    %if ~exist(Seqfile, 'file')
-        % sigma = 0;
-        % values = ParetoSequence(Ntrial, sigma);
-        values = ones(Ntrial,2);
-        [Seq, evs] = Generator(Ntrial, values, dt);
-        Seq = Seq(:, [1, 2]);
-        % Time vector
-        duration = length(Seq)*dt; % ms
-        time = [dt:dt:duration]';
-        timesteps = numel(time);
-        %save(Seqfile, 'Seq','evs','values','time','duration','timesteps');
-   %else
-        %load(Seqfile);
-    %end
-    % duration = length(Seq)*dt; % ms
+   
     ValAmp = ValAmps(runi);
     subplotdir = fullfile(plotdir, 'ValAmp%3.3',ValAmp);
     if ~exist(subplotdir,'dir')
@@ -44,9 +54,9 @@ parfor runi = 1:20
     end
     fprintf('%s, ValAmp = %3.3f\n', ProjectName, ValAmp);
     %% runner
-    % [Ntwk, WEI, WIE, WEE] = RunnerNMDA1D(ValAmp, gnrloutdir, plotdir, subplotdir);
+    RunnerNMDA1D;
     %% Evaluation
-    %ChecktheTestNMDA1D;
-    %ComputationNMDA1D;
+    ChecktheTestNMDA1D;
+    ComputationNMDA1D;
 end
 
