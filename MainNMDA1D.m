@@ -10,7 +10,7 @@ dt = .1; % ms, time precision for simulation, in unit of second
 Ntrial = 1600;
 ValAmps = [.01, .05, .1, .5, 1, 2, 8, 30, 50, 100];
 mypool = parpool(numel(ValAmps)*2);
-parfor runi = 1:(numel(ValAmps)*2)
+parfor runi = 1:20
     sessi = ceil(runi/numel(ValAmps));
     if sessi == 1
         ProjectName = sprintf('Sync');
@@ -27,7 +27,7 @@ parfor runi = 1:(numel(ValAmps)*2)
         % values = ParetoSequence(Ntrial, sigma);
         values = ones(Ntrial,2);
         [Seq, evs] = Generator(Ntrial, values, dt);
-        Seq = Seq(:, [1,2]);
+        Seq = Seq(:, [1, 2]);
         % Time vector
         duration = length(Seq)*dt; % ms
         time = [dt:dt:duration]';
