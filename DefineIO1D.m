@@ -11,8 +11,16 @@ elseif strcmp(os, 'PCWIN64')
     Projdir = 'C:\Users\Bo\NYU Langone Health Dropbox\Shen Bo\Bo Shen Working files\STDP_Project\Analyses';
     Gitdir = 'C:\Users\Bo\Documents\GitHub\STDP';
 end
-gnrloutdir = fullfile(Projdir, 'General1DSmallerPatch');
+gnrloutdir = fullfile(Projdir, 'General1D');
 if ~exist(gnrloutdir,'dir')
     mkdir(gnrloutdir);
 end
 addpath(genpath(Gitdir));
+% check GPU
+if gpuDeviceCount > 0
+    gpuparallel = 1;
+else
+    warning("Implementing this code requires GPU");
+end
+% loading color palette
+Mycolors = ColorPalette(gnrloutdir);

@@ -1,4 +1,4 @@
-function Ntwk = InputTuning1D(Ntwk, OKeeffe, plotdir)
+function InputTuning1D(Ntwk, OKeeffe, plotdir)
 %% Input tuning - theoritical
 h = figure;
 filename = 'InputTuning_Theoritical';

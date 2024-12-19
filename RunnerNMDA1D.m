@@ -1,10 +1,8 @@
-% function [Ntwk, WEI, WIE, WEE] = RunnerNMDA1D(ValAmp, gnrloutdir, plotdir, subplotdir)% Runner
+function [Ntwk, WEI, WIE, WEE] = RunnerNMDA1D(Ntwk, Seq, dt, Projdir, TestName, visualize)% Runner
 
 %% Specify project name and output
+subplotdir = fullfile(Projdir, Testname);
 Rsltfile = fullfile(subplotdir,'Rslts.mat');
-
-%% Build the Input structure
-InputSetup1D;
 
 %% Simulating the neural network
 % Initializing the network status at t=0
@@ -46,7 +44,7 @@ ExctNoise = Ib + gpuArray.randn(Ntwk.Exct.N,1)*Ntwk.Noise.sgm; % OU noise on exc
 InhbtNosie = Ib + gpuArray.randn(Ntwk.Inhbt.N,1)*Ntwk.Noise.sgm; % OU noise on inhibitory neurons
 % Dynamic variables of the example neurons
 smplintrvl = dt; % ms
-smplonsets = round(evs(round(linspace(1,numel(evs(:,1)),18)),1)*1000/dt);
+smplonsets = round(Seq.evs(round(linspace(1,numel(evs(:,1)),18)),1)*1000/dt);
 display(smplonsets*dt/1000);
 smplsteps = (500+200)/smplintrvl;
 smplE = Ntwk.Smpl.E; % E1, E2, EShare1, EShare2
@@ -72,36 +70,37 @@ Smpl.xEpost = [xEpost(smplE,1)'; zeros(smplsteps-1, numel(smplE))];
 Smpl.xIpre = [xIpre(1,smplI); zeros(smplsteps-1, numel(smplI))];
 Smpl.xIpost = [xIpost(smplI,1)'; zeros(smplsteps-1, numel(smplI))];
 Smpl.ExctNoise = [ExctNoise(smplE,1)'; zeros(smplsteps-1, numel(smplE))]; % ExctNoise(exampleE,1)
-% simulation start...
-% prepare the visualization
-ExctVec = 1:Ntwk.Exct.N;
-InhbtVec = [1:Ntwk.Inhbt.N]*4;
-h1 = figure; hold on;
-xlabel('Time (ms)');
-ylabel('Neurons');
-ylim([1, Ntwk.Exct.N]);
-title('Raster plot of Exct/Inhbt neurons');
-h2 = figure('Position', [1, 1, 1920, 460]); hold on;
-pbaspect([2 1 1]);
-h2.Color = 'k'; % Sets the figure background to black
-ax = gca;
-ax.Color = 'k';
-ax.XColor = 'w';
-ax.YColor = 'w';
-xlabel('x (\mum)', 'Color', 'w');
-ylabel('y (\mum)', 'Color', 'w');
-xlim([-Ntwk.XScale, Ntwk.XScale]);
-ylim([-Ntwk.YScale, Ntwk.YScale]);
+% prepare for visualization
+if visualize == 1
+    h1 = figure; hold on;
+    xlabel('Time (ms)');
+    ylabel('Neurons');
+    ylim([-Ntwk.XScale, Ntwk.XScale]);
+    title('Raster plot of Exct/Inhbt neurons');
+    h2 = figure('Position', [1, 1, 1920, 460]); hold on;
+    pbaspect([2 1 1]);
+    h2.Color = 'k'; % Sets the figure background to black
+    ax = gca;
+    ax.Color = 'k';
+    ax.XColor = 'w';
+    ax.YColor = 'w';
+    xlabel('x (\mum)', 'Color', 'w');
+    ylabel('y (\mum)', 'Color', 'w');
+    xlim([-Ntwk.XScale, Ntwk.XScale]);
+    ylim([-Ntwk.YScale, Ntwk.YScale]);
+end
 % Save spike train to incoorperate the delays
 bankwidth = round(max([Ntwk.Delay.EE, Ntwk.Delay.EE, Ntwk.Delay.IE])/dt);
 SpkTrnE = nan(Ntwk.Exct.N+1,bankwidth); tickE = 0;
 SpkTrnI = nan(Ntwk.Inhbt.N+1,bankwidth); tickI = 0;
+% simulation start...
 smpl = 0;
 for t = 1:(timesteps-1)
     % input spikes, Poission process
+    Evis = (Seq.evs*1000 - t*dt) <= 500;
     InputSpikes = gpuArray.rand(Ntwk.Input.N,1);
-    InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < Ntwk.Input.spikeProbability*Seq(t,1)*ValAmp;
-    InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < Ntwk.Input.spikeProbability*Seq(t,2)*ValAmp;
+    InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < Ntwk.Input.spikeProbability*Seq.evs(Evis(:,1),1)*Seq.Vals(Evis(:,1),1);
+    InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < Ntwk.Input.spikeProbability*Seq.evs(Evis(:,2),2)*Seq.Vals(Evis(:,2),2);
 
     % Synaptic plasticity
     xEpre = xEpre -(xEpre/Ntwk.ExctSTDP.tau_prepost)*dt + Espikes';

@@ -1,6 +1,5 @@
+function Mycolors = ColorPalette(gnrloutdir)
 %% setup
-addpath(genpath('./utils/'));
-addpath(genpath('./func/'));
 pastelPalette = [ ...
     0.8941, 0.4471, 0.2471;  % Pastel Red
     0.3686, 0.6118, 0.8275;  % Pastel Blue
@@ -21,6 +20,7 @@ OKeeffe = [
     152, 251, 152;  % Pale Green (Light Green)
     218, 112, 214;  % Orchid
     ]/255;
+Mycolors = OKeeffe;
 h = figure;
 hold on;
 for i = 1:size(OKeeffe,1)
@@ -29,8 +29,3 @@ end
 mysavefig(h, 'Colorspace', gnrloutdir, 14, [8,3], 0);
 close(h);
 
-if gpuDeviceCount > 0
-    gpuparallel = 1;
-else
-    warning("Implementing this code requires GPU");
-end
