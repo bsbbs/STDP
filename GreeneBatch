@@ -2,7 +2,7 @@
 #SBATCH --partition=v100
 #SBATCH --job-name=ValAmps
 #SBATCH --mem=120G
-#SBATCH --time=28-00:00:00
+#SBATCH --time=7-00:00:00
 #SBATCH --tasks=1
 #SBATCH --cpus-per-task=14
 #SBATCH --nodes=1
