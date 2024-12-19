@@ -1,7 +1,3 @@
-%% Get the SLURM array task ID
-taskID = str2double(getenv('SLURM_ARRAY_TASK_ID'));
-fprintf('Running MATLAB TASK %d\n', taskID);
-
 %% define I/O
 DefineIO1D;
 
@@ -9,14 +5,16 @@ DefineIO1D;
 visualize = 1;
 Ntwk = NetworkgeneratorGPU1D(gnrloutdir, visualize, Mycolors);
 close all;
+
 %% Define input sequences
-Ntrial = 1600; % numbers of testing trials
-evfile = fullfile(gnrloutdir, sprintf('Events%itrials.mat', Ntrial));
+Ntrial = 1; % numbers of testing trials
+dt = .1; % ms, time precision for simulation
+evfile = fullfile(gnrloutdir, sprintf('EventsPool%itrials.mat', Ntrial));
 if ~exist(evfile, 'file')
-    evs = Generator(Ntrial);
-    save(evfile, 'evs');
+    evspool = Generator(Ntrial);
+    save(evfile, 'evspool');
 else
-    load(evfile, 'evs');
+    load(evfile, 'evspool');
 end
 
 %% Define values of the input events
@@ -26,46 +24,46 @@ if ~exist(Testdir, 'dir')
 end
 
 %% Parrellel simulations
-ValAmps = repmat([.01, .05, .1, .5, 1, 2, 8, 30, 50, 100],1, 2);
-evsSync = [evs(:,1) evs(:,1)];
-evsAsync = evs;
-runi = taskID;
-sessi = ceil(runi/10);
-if sessi == 1
-    Type = 'Sync';
-    Seq = evsSync;
-elseif sessi == 2
-    Type = 'Async';
-    Seq = evsAsync;
-end
-% define values
-ValAmp = ValAmps(runi);
-Runningdir = fullfile(Testdir, sprintf('%s_ValAmp%3.3f', Type, ValAmp));
-if ~exist(Runningdir,'dir')
-    mkdir(Runningdir);
-end
-fprintf('%s, ValAmp = %3.3f\n', Type, ValAmp);
-valfile = fullfile(Runningdir, sprintf('%s_ValAmp%3.3f_%itrials.mat', Type, ValAmp, Ntrial));
-if ~exist(valfile, 'file')
+Vals = repmat([.01, .05, .1, .5, 1, 2, 8, 30, 50, 100], 1, 2);
+evsSync = [evspool(:,1) evspool(:,1)];
+evsAsync = evspool;
+Inputstruct = Ntwk.Input;
+% mypool = parpool(2);
+parfor runi = 1:20
+    sessi = ceil(runi/10);
+    if sessi == 1
+        Type = 'Sync';
+        evs = evsSync;
+    elseif sessi == 2
+        Type = 'Async';
+        evs = evsAsync;
+    end
+    % define values
+    Val = Vals(runi);
+    Runningdir = fullfile(Testdir, sprintf('%s_Val%3.2f', Type, Val));
+    if ~exist(Runningdir,'dir')
+        mkdir(Runningdir);
+    end
+    fprintf('%s, Val = %3.2f\n', Type, Val);
+    valfile = fullfile(Runningdir, sprintf('Seq_%s_Val%3.2f_%itrials.mat', Type, Val, Ntrial));
     % sigma = 0;
     % values = ParetoSequence(Ntrial, sigma);
-    values = ones(Ntrial,2)*ValAmp;
-    save(valfile, 'values');
+    values = ones(Ntrial,2)*Val;
+    Seq = struct('evs',evs,'values',values);
+    s = struct("Seq", Seq);
+    save(valfile, '-fromstruct', s);
+
+    % Visualize input sequences, integrated with values
+    if visualize
+        VisualizeSeq(Inputstruct, Seq, dt, Mycolors, Runningdir);
+    end
+
+    %% runner
+    %% Specify project name and output
+    Trainedfile = fullfile(Runningdir,'TrainedWeights.mat');
+    RunnerNMDA1D(Ntwk, Seq, dt, Runningdir);
+    % RunnerNMDA1D;
+    fprintf('%s, Val = %3.2f Done\n', Type, Val);
+    s = struct("WEE", WEE, "WEI", WEI, "WIE", WIE);
+    save(Trainedfile, '-fromstruct', s);
 end
-% Visualize input sequences, integrated with values
-%     if visualize
-%         VisualizeSeq(Seq, values, Mycolors, Runningdir);
-%     end
-
-%     %% runner
-%     dt = .1; % ms, time precision for simulation
-%     duration = length(SeqPool)*dt; % ms
-%     time = (dt:dt:duration)';
-%     timesteps = numel(time);
-%     save(Seqfile, 'SeqPool','evs','values','time','duration','timesteps');
-%     Ntwk = RunnerNMDA1D(Ntwk, Seq, dt, Runningdir, visualize);
-%     %% Evaluation
-%     ChecktheTestNMDA1D;
-%     ComputationNMDA1D;
-
-

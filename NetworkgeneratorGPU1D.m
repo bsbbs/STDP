@@ -223,6 +223,7 @@ if ~exist(Ntwkfile, 'file')
     Ntwk.AxonRange.Input = 50; % 130; % um, for each input neuron, the axon connection to the neighbouring E neuron is assumed the same as Gaussian distance delay as E to E
     Ntwk.CnnctProb.Input = .2; % The connection probability from input neurons are set as the same as E to E
     Ntwk.Input.on = .5; % input intervene 50 % of the neurons nearby
+    Ntwk.Input.spikeRate = 100/1000; % firing rate per second
     gpurng(2024);
     r = gpuArray.randn(Ntwk.Input.N,1)*Ntwk.Input.Tube; % radius of the input fiber distribution
     gpurng(2025);

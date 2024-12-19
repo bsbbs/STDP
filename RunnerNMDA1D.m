@@ -1,9 +1,4 @@
-function [Ntwk, WEI, WIE, WEE] = RunnerNMDA1D(Ntwk, Seq, dt, Projdir, TestName, visualize)% Runner
-
-%% Specify project name and output
-subplotdir = fullfile(Projdir, Testname);
-Rsltfile = fullfile(subplotdir,'Rslts.mat');
-
+function RunnerNMDA1D(Ntwk, Seq, dt, Runningdir)
 %% Simulating the neural network
 % Initializing the network status at t=0
 % - membrane potentials
@@ -33,6 +28,7 @@ Espikes = gpuArray.zeros(Ntwk.Exct.N,1);
 Ispikes = gpuArray.zeros(Ntwk.Inhbt.N,1);
 refractionPeriod.E = Ntwk.Exct.tauREF/dt;
 refractionPeriod.I = Ntwk.Inhbt.tauREF/dt;
+spikeProbability = Ntwk.Input.spikeRate * dt;
 % - intermediate variable for STPD convolution over time
 xEpre = gpuArray.zeros(1,Ntwk.Exct.N);
 xEpost = gpuArray.zeros(Ntwk.Exct.N,1);
@@ -42,66 +38,74 @@ xIpost = gpuArray.zeros(Ntwk.Inhbt.N,1);
 Ib = 150; % Vogels et al., 2011; 129; % pA, baseline input to every excitatory neurons
 ExctNoise = Ib + gpuArray.randn(Ntwk.Exct.N,1)*Ntwk.Noise.sgm; % OU noise on excitatory neurons
 InhbtNosie = Ib + gpuArray.randn(Ntwk.Inhbt.N,1)*Ntwk.Noise.sgm; % OU noise on inhibitory neurons
-% Dynamic variables of the example neurons
-smplintrvl = dt; % ms
-smplonsets = round(Seq.evs(round(linspace(1,numel(evs(:,1)),18)),1)*1000/dt);
-display(smplonsets*dt/1000);
-smplsteps = (500+200)/smplintrvl;
-smplE = Ntwk.Smpl.E; % E1, E2, EShare1, EShare2
-smplI = Ntwk.Smpl.I; % I1, I2, IShare
-Smpl.ExctV = [ExctV(smplE,1)'; nan(smplsteps-1, numel(smplE))];
-Smpl.InhbtV = [InhbtV(smplI,1)'; nan(smplsteps-1, numel(smplI))];
-Smpl.ExctgAMPA = [ExctgAMPA(smplE,1)'; nan(smplsteps-1, numel(smplE))];
-Smpl.ExctgNMDA = [ExctgNMDA(smplE,1)'; nan(smplsteps-1, numel(smplE))];
-Smpl.ExctgGABA = [ExctgGABA(smplE,1)'; nan(smplsteps-1, numel(smplE))];
-Smpl.InhbtgAMPA = [InhbtgAMPA(smplI,1)'; nan(smplsteps-1, numel(smplI))];
-Smpl.InhbtgNMDA = [InhbtgNMDA(smplI,1)'; nan(smplsteps-1, numel(smplI))];
-Smpl.InhbtgGABA = [InhbtgGABA(smplI,1)'; nan(smplsteps-1, numel(smplI))];
-Smpl.WEI = gpuArray.zeros(smplsteps, numel(smplI), numel(smplE));
-Smpl.WEI(1,:,:) = WEI(smplI, smplE);
-Smpl.WIE = gpuArray.zeros(smplsteps, numel(smplE), numel(smplI));
-Smpl.WIE(1,:,:) = WIE(smplE, smplI);
-Smpl.WEE = gpuArray.zeros(smplsteps, numel(smplE), numel(smplE));
-Smpl.WEE(1,:,:) = WEE(smplE, smplE);
-Smpl.Espikes = [Espikes(smplE,1)'; zeros(smplsteps-1, numel(smplE))];
-Smpl.Ispikes = [Ispikes(smplI,1)'; zeros(smplsteps-1, numel(smplI))];
-Smpl.xEpre = [xEpre(1,smplE); zeros(smplsteps-1, numel(smplE))];
-Smpl.xEpost = [xEpost(smplE,1)'; zeros(smplsteps-1, numel(smplE))];
-Smpl.xIpre = [xIpre(1,smplI); zeros(smplsteps-1, numel(smplI))];
-Smpl.xIpost = [xIpost(smplI,1)'; zeros(smplsteps-1, numel(smplI))];
-Smpl.ExctNoise = [ExctNoise(smplE,1)'; zeros(smplsteps-1, numel(smplE))]; % ExctNoise(exampleE,1)
-% prepare for visualization
-if visualize == 1
-    h1 = figure; hold on;
-    xlabel('Time (ms)');
-    ylabel('Neurons');
-    ylim([-Ntwk.XScale, Ntwk.XScale]);
-    title('Raster plot of Exct/Inhbt neurons');
-    h2 = figure('Position', [1, 1, 1920, 460]); hold on;
-    pbaspect([2 1 1]);
-    h2.Color = 'k'; % Sets the figure background to black
-    ax = gca;
-    ax.Color = 'k';
-    ax.XColor = 'w';
-    ax.YColor = 'w';
-    xlabel('x (\mum)', 'Color', 'w');
-    ylabel('y (\mum)', 'Color', 'w');
-    xlim([-Ntwk.XScale, Ntwk.XScale]);
-    ylim([-Ntwk.YScale, Ntwk.YScale]);
-end
+% % Dynamic variables of the example neurons
+% smplintrvl = dt; % ms
+smplonsets = round(Seq.evs(round(linspace(1,numel(Seq.evs(:,1)),30)),1)*1000/dt);
+smplonsets = unique(smplonsets);
+% display(smplonsets*dt/1000);
+% smplsteps = (500+200)/smplintrvl;
+% timevec = nan(smplsteps-1,1);
+% smplE = Ntwk.Smpl.E; % E1, E2, EShare1, EShare2
+% smplI = Ntwk.Smpl.I; % I1, I2, IShare
+% Smpl.ExctV = [ExctV(smplE,1)'; nan(smplsteps-1, numel(smplE))];
+% Smpl.InhbtV = [InhbtV(smplI,1)'; nan(smplsteps-1, numel(smplI))];
+% Smpl.ExctgAMPA = [ExctgAMPA(smplE,1)'; nan(smplsteps-1, numel(smplE))];
+% Smpl.ExctgNMDA = [ExctgNMDA(smplE,1)'; nan(smplsteps-1, numel(smplE))];
+% Smpl.ExctgGABA = [ExctgGABA(smplE,1)'; nan(smplsteps-1, numel(smplE))];
+% Smpl.InhbtgAMPA = [InhbtgAMPA(smplI,1)'; nan(smplsteps-1, numel(smplI))];
+% Smpl.InhbtgNMDA = [InhbtgNMDA(smplI,1)'; nan(smplsteps-1, numel(smplI))];
+% Smpl.InhbtgGABA = [InhbtgGABA(smplI,1)'; nan(smplsteps-1, numel(smplI))];
+% Smpl.WEI = gpuArray.zeros(smplsteps, numel(smplI), numel(smplE));
+% Smpl.WEI(1,:,:) = WEI(smplI, smplE);
+% Smpl.WIE = gpuArray.zeros(smplsteps, numel(smplE), numel(smplI));
+% Smpl.WIE(1,:,:) = WIE(smplE, smplI);
+% Smpl.WEE = gpuArray.zeros(smplsteps, numel(smplE), numel(smplE));
+% Smpl.WEE(1,:,:) = WEE(smplE, smplE);
+% Smpl.Espikes = [Espikes(smplE,1)'; zeros(smplsteps-1, numel(smplE))];
+% Smpl.Ispikes = [Ispikes(smplI,1)'; zeros(smplsteps-1, numel(smplI))];
+% Smpl.xEpre = [xEpre(1,smplE); zeros(smplsteps-1, numel(smplE))];
+% Smpl.xEpost = [xEpost(smplE,1)'; zeros(smplsteps-1, numel(smplE))];
+% Smpl.xIpre = [xIpre(1,smplI); zeros(smplsteps-1, numel(smplI))];
+% Smpl.xIpost = [xIpost(smplI,1)'; zeros(smplsteps-1, numel(smplI))];
+% Smpl.ExctNoise = [ExctNoise(smplE,1)'; zeros(smplsteps-1, numel(smplE))]; % ExctNoise(exampleE,1)
+% % prepare for visualization
+% if visualize == 1
+%     h1 = figure; hold on;
+%     xlabel('Time (ms)');
+%     ylabel('Neurons');
+%     ylim([-Ntwk.XScale, Ntwk.XScale]);
+%     title('Raster plot of Exct/Inhbt neurons');
+%     h2 = figure('Position', [1, 1, 1920, 460]); hold on;
+%     pbaspect([2 1 1]);
+%     h2.Color = 'k'; % Sets the figure background to black
+%     ax = gca;
+%     ax.Color = 'k';
+%     ax.XColor = 'w';
+%     ax.YColor = 'w';
+%     xlabel('x (\mum)', 'Color', 'w');
+%     ylabel('y (\mum)', 'Color', 'w');
+%     xlim([-Ntwk.XScale, Ntwk.XScale]);
+%     ylim([-Ntwk.YScale, Ntwk.YScale]);
+% end
 % Save spike train to incoorperate the delays
 bankwidth = round(max([Ntwk.Delay.EE, Ntwk.Delay.EE, Ntwk.Delay.IE])/dt);
 SpkTrnE = nan(Ntwk.Exct.N+1,bankwidth); tickE = 0;
 SpkTrnI = nan(Ntwk.Inhbt.N+1,bankwidth); tickI = 0;
 % simulation start...
-smpl = 0;
+% smpl = 0;
+duration = max(Seq.evs(:))+1; % secs
+timesteps = round(duration*1000/dt);
 for t = 1:(timesteps-1)
     % input spikes, Poission process
-    Evis = (Seq.evs*1000 - t*dt) <= 500;
+    Evis = (Seq.evs*1000 - t*dt) >= 0 & (Seq.evs*1000 - t*dt) <= 500;
     InputSpikes = gpuArray.rand(Ntwk.Input.N,1);
-    InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < Ntwk.Input.spikeProbability*Seq.evs(Evis(:,1),1)*Seq.Vals(Evis(:,1),1);
-    InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < Ntwk.Input.spikeProbability*Seq.evs(Evis(:,2),2)*Seq.Vals(Evis(:,2),2);
-
+    for inputi = 1:Ntwk.Input.Source
+        if any(Evis(:,inputi))
+            InputSpikes(Ntwk.Input.Origins == inputi) = InputSpikes(Ntwk.Input.Origins == inputi) < spikeProbability*Seq.values(Evis(:,inputi),inputi);
+        else
+            InputSpikes(Ntwk.Input.Origins == inputi) = 0;
+        end
+    end
     % Synaptic plasticity
     xEpre = xEpre -(xEpre/Ntwk.ExctSTDP.tau_prepost)*dt + Espikes';
     xEpost = xEpost -(xEpost/Ntwk.ExctSTDP.tau_postpre)*dt + Espikes;
@@ -197,69 +201,78 @@ for t = 1:(timesteps-1)
     InhbtV(Ispikes) = Ntwk.Vfire;
     InhbtRefraction(Ispikes) = refractionPeriod.I;
 
-    % Example traces
-    if any(t == smplonsets - 100/dt)
-        evi = find(t == smplonsets - 100/dt);
-        filename = sprintf('RealtimeMonitor_Event%i', evi);
-        % Prepare the video file
-        profiles = VideoWriter.getProfiles();
-        disp(profiles);
-        writerObj1 = VideoWriter(fullfile(subplotdir, filename), 'Motion JPEG AVI');
-        writerObj1.FrameRate = 100; % Adjust frame rate as needed
-        writerObj1.Quality = 95;   % Set quality to maximum for best results (only for MPEG-4)
-        open(writerObj1);
-        timevec = [];
-        smplt = 0; % reset sampling time label
-        smpl = 1; % turn flag on, start sampling
-    end
-    if smpl && mod(t*dt, smplintrvl) == 0
-        smplt = smplt + 1;
-        Smpl.xEpre(smplt,:) = xEpre(smplE);
-        Smpl.xEpost(smplt,:) = xEpost(smplE)';
-        Smpl.xIpre(smplt,:) = xIpre(smplI);
-        Smpl.xIpost(smplt,:) = xIpost(smplI)';
-        Smpl.WEI(smplt,:,:) = WEI(smplI, smplE);
-        Smpl.WIE(smplt,:,:) = WIE(smplE, smplI);
-        Smpl.WEE(smplt,:,:) = WEE(smplE, smplE);
-        Smpl.ExctgAMPA(smplt,:) = ExctgAMPA(smplE)';
-        Smpl.ExctgNMDA(smplt,:) = ExctgNMDA(smplE)';
-        Smpl.ExctgGABA(smplt,:) = ExctgGABA(smplE)';
-        Smpl.InhbtgAMPA(smplt,:) = InhbtgAMPA(smplI)';
-        Smpl.InhbtgNMDA(smplt,:) = InhbtgNMDA(smplI)';
-        Smpl.InhbtgGABA(smplt,:) = InhbtgGABA(smplI)';
-        Smpl.ExctV(smplt,:) = ExctV(smplE);
-        Smpl.Espikes(smplt,:) = Espikes(smplE);
-        Smpl.InhbtV(smplt,:) = InhbtV(smplI)';
-        Smpl.Ispikes(smplt,:) = Ispikes(smplI)';
-        Smpl.ExctNoise(smplt,:) = ExctNoise(smplE)';
-        timevec = [timevec; t*dt];
-    end
-    % taping movie
-    if smpl
-        figure(h1);
-        plot(time(t)*ones(sum(Espikes),1), Ntwk.Exct.Location(Espikes,1), 'k.', 'MarkerSize', 2);
-        plot(time(t)*ones(sum(Ispikes),1), Ntwk.Inhbt.Location(Ispikes,1), 'r.', 'MarkerSize', 3);
-        figure(h2);
-        plot(Ntwk.Exct.Location(Espikes,1), Ntwk.Exct.Location(Espikes,2),'w.', 'MarkerSize', 8);
-        plot(Ntwk.Inhbt.Location(Ispikes,1), Ntwk.Inhbt.Location(Ispikes,2),'r.', 'MarkerSize', 10);
-        if mod(t*dt, 1) == 0
-            drawnow; % Update figure window
-            frame = getframe(gcf);
-            writeVideo(writerObj1, frame);
-            cla;
-        end
-    end
+%     % Example traces
+%     if any(t == smplonsets - 100/dt)
+%         Sgi = find(t == smplonsets - 100/dt);
+%         filename = sprintf('RealtimeMonitor_Segment%i', Sgi);
+%         if visualize
+%             % Prepare the video file
+%             profiles = VideoWriter.getProfiles();
+%             disp(profiles);
+%             writerObj1 = VideoWriter(fullfile(subplotdir, filename), 'Motion JPEG AVI');
+%             writerObj1.FrameRate = 100; % Adjust frame rate as needed
+%             writerObj1.Quality = 95;   % Set quality to maximum for best results (only for MPEG-4)
+%             open(writerObj1);
+%         end
+%         smplt = 0; % reset sampling time label
+%         smpl = 1; % turn flag on, start sampling
+%     end
+%     if smpl && mod(t*dt, smplintrvl) == 0
+%         smplt = smplt + 1;
+%         Smpl.xEpre(smplt,:) = xEpre(smplE);
+%         Smpl.xEpost(smplt,:) = xEpost(smplE)';
+%         Smpl.xIpre(smplt,:) = xIpre(smplI);
+%         Smpl.xIpost(smplt,:) = xIpost(smplI)';
+%         Smpl.WEI(smplt,:,:) = WEI(smplI, smplE);
+%         Smpl.WIE(smplt,:,:) = WIE(smplE, smplI);
+%         Smpl.WEE(smplt,:,:) = WEE(smplE, smplE);
+%         Smpl.ExctgAMPA(smplt,:) = ExctgAMPA(smplE)';
+%         Smpl.ExctgNMDA(smplt,:) = ExctgNMDA(smplE)';
+%         Smpl.ExctgGABA(smplt,:) = ExctgGABA(smplE)';
+%         Smpl.InhbtgAMPA(smplt,:) = InhbtgAMPA(smplI)';
+%         Smpl.InhbtgNMDA(smplt,:) = InhbtgNMDA(smplI)';
+%         Smpl.InhbtgGABA(smplt,:) = InhbtgGABA(smplI)';
+%         Smpl.ExctV(smplt,:) = ExctV(smplE);
+%         Smpl.Espikes(smplt,:) = Espikes(smplE);
+%         Smpl.InhbtV(smplt,:) = InhbtV(smplI)';
+%         Smpl.Ispikes(smplt,:) = Ispikes(smplI)';
+%         Smpl.ExctNoise(smplt,:) = ExctNoise(smplE)';
+%         timevec(smplt) = t*dt;
+%     end
+%     % taping movie
+%     if visualize && smpl
+%         figure(h1);
+%         plot(t*dt/1000*ones(sum(Espikes),1), Ntwk.Exct.Location(Espikes,1), 'k.', 'MarkerSize', 2);
+%         plot(t*dt/1000*ones(sum(Ispikes),1), Ntwk.Inhbt.Location(Ispikes,1), 'r.', 'MarkerSize', 3);
+%         figure(h2);
+%         plot(Ntwk.Exct.Location(Espikes,1), Ntwk.Exct.Location(Espikes,2),'w.', 'MarkerSize', 8);
+%         plot(Ntwk.Inhbt.Location(Ispikes,1), Ntwk.Inhbt.Location(Ispikes,2),'r.', 'MarkerSize', 10);
+%         if mod(t*dt, 1) == 0
+%             drawnow; % Update figure window
+%             frame = getframe(gcf);
+%             writeVideo(writerObj1, frame);
+%             cla;
+%         end
+%     end
     if any(t == smplonsets + 600/dt)
-        save(fullfile(subplotdir, [filename, '.mat']), 'Smpl','timevec','WEE','WEI','WIE', '-v7.3');
-        figure(h1);
-        axis([time(smplonsets(evi))+[-100, 600] 0 Ntwk.Exct.N]);
-        mysavefig(h1, filename, subplotdir, 12, [4, 4], 1);
-        savefig(h1, fullfile(subplotdir,filename));
-        cla;
-        figure(h2);
-        cla;
-        close(writerObj1);
-        smpl = 0; % sampling stopped
+        s = struct("WEE", WEE, "WEI", WEI, "WIE", WIE);
+        Sgi = find(t == smplonsets + 600/dt);
+        filename = sprintf('Weights_Seg%i', Sgi);
+        % s = struct("Smpl", Smpl, "timevec", timevec, "WEE", WEE, "WEI", WEI, "WIE", WIE);
+        save(fullfile(Runningdir, [filename, '.mat']), '-fromstruct', s);
+%         if visualize
+%             figure(h1);
+%             axis([(smplonsets(Sgi)*dt+[-100, 600])/1000 0 Ntwk.Exct.N]);
+%             mysavefig(h1, filename, Runningdir, 12, [4, 4], 1);
+%             savefig(h1, fullfile(Runningdir,filename));
+%             close(h1);
+%             cla;
+%             figure(h2);
+%             cla;
+%             close(writerObj1);
+%             close(h2);
+%         end
+%         smpl = 0; % sampling stopped
     end
     if mod(t*dt, 10) == 0
         fprintf('.');
@@ -268,46 +281,41 @@ for t = 1:(timesteps-1)
         end
     end
 end
-fprintf('Successfully completed\n');
-save(Rsltfile, 'Ntwk', 'Seq', 'Smpl', 'WEI', 'WIE', 'WEE', '-v7.3');
 
-%% visualize weight change
-h = figure;
-filename = sprintf('WEI_change_%1.1fs', duration/1000);
-imagesc(WEI - Ntwk.wEI_initial)
-colormap(bluewhitered);
-c = colorbar;
-c.Label.String = 'Weight change';
-c.Location = 'northoutside';
-xlabel("Exct neurons");
-ylabel("Inhbt neurons");
-mysavefig(h, filename, subplotdir, 12, [2.5, 2.81], 1);
-
-h = figure;
-filename = sprintf('WIE_change_%1.1fs', duration/1000);
-imagesc(WIE - Ntwk.wIE_initial)
-colormap(bluewhitered);
-c = colorbar;
-c.Label.String = 'Weight change';
-c.Location = 'northoutside';
-xlabel("Inhbt neurons");
-ylabel("Exct neurons");
-mysavefig(h, filename, subplotdir, 12, [2.5, 2.81], 1);
-
-h = figure;
-filename = sprintf('WEE_change_%1.1fs', duration/1000);
-imagesc(WEE - Ntwk.wEE_initial)
-colormap(bluewhitered);
-c = colorbar;
-c.Label.String = 'Weight change';
-c.Location = 'northoutside';
-xlabel("Exct neurons");
-ylabel("Exct neurons");
-mysavefig(h, filename, subplotdir, 12, [2.5, 2.81], 1);
-
-%% Overall tuning
-EvalTuning1D(Ntwk,WEE,WEI,WIE,OKeeffe,subplotdir);
-%% Save results
-% close all;
-% clearvars -except 'Ntwk' 'Seq' 'Smpl' 'WEI' 'WIE' 'WEE' 'Rsltfile';
-
+% %% visualize weight change
+% h = figure;
+% filename = sprintf('WEI_change_%1.1fs', duration/1000);
+% imagesc(WEI - Ntwk.wEI_initial)
+% colormap(bluewhitered);
+% c = colorbar;
+% c.Label.String = 'Weight change';
+% c.Location = 'northoutside';
+% xlabel("Exct neurons");
+% ylabel("Inhbt neurons");
+% mysavefig(h, filename, Runningdir, 12, [2.5, 2.81], 1);
+% 
+% h = figure;
+% filename = sprintf('WIE_change_%1.1fs', duration/1000);
+% imagesc(WIE - Ntwk.wIE_initial)
+% colormap(bluewhitered);
+% c = colorbar;
+% c.Label.String = 'Weight change';
+% c.Location = 'northoutside';
+% xlabel("Inhbt neurons");
+% ylabel("Exct neurons");
+% mysavefig(h, filename, Runningdir, 12, [2.5, 2.81], 1);
+% 
+% h = figure;
+% filename = sprintf('WEE_change_%1.1fs', duration/1000);
+% imagesc(WEE - Ntwk.wEE_initial)
+% colormap(bluewhitered);
+% c = colorbar;
+% c.Label.String = 'Weight change';
+% c.Location = 'northoutside';
+% xlabel("Exct neurons");
+% ylabel("Exct neurons");
+% mysavefig(h, filename, Runningdir, 12, [2.5, 2.81], 1);
+% 
+% %% Overall tuning
+% EvalTuning1D(Ntwk,WEE,WEI,WIE,OKeeffe,Runningdir);
+% end

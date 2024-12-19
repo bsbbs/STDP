@@ -1,21 +1,11 @@
-% Check the test
-% DefineIO1D;
-% Setup;
-% dt = .1;
-% Ntrial = 1600;
-% ProjectName = sprintf('SyncNMDA1D100_%i', Ntrial);
-% plotdir = fullfile(Projdir, ProjectName);
-% if ~exist(plotdir,'dir')
-%     mkdir(plotdir);
-% end
-Seqfile = fullfile(plotdir, 'Seq.mat');
-load(Seqfile);
-Ntwkfile = fullfile(plotdir, 'Ntwk.mat');
-load(Ntwkfile);
-Rsltfile = fullfile(subplotdir,'Rslts.mat');
-load(Rsltfile);
+% Seqfile = fullfile(plotdir, 'Seq.mat');
+% load(Seqfile);
+% Ntwkfile = fullfile(plotdir, 'Ntwk.mat');
+% load(Ntwkfile);
+% Rsltfile = fullfile(subplotdir,'Rslts.mat');
+% load(Rsltfile);
 %% visualizing dynamically changing periods
-smplonsets = round(evs(round(linspace(1,numel(evs(:,1)),18)),1)*1000/dt);
+smplonsets = round(evs(round(linspace(1,numel(evs(:,1)),30)),1)*1000/dt);
 EIMtrx = nan(numel(smplonsets)+1, Ntwk.Input.Source);
 IEMtrx = nan(numel(smplonsets)+1,  Ntwk.Input.Source);
 RIMtrx = nan(numel(smplonsets)+1, Ntwk.Input.Source, Ntwk.Input.Source);
