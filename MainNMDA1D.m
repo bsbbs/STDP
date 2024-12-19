@@ -32,7 +32,7 @@ end
 ValAmps = repmat([.01, .05, .1, .5, 1, 2, 8, 30, 50, 100],1, 2);
 Seq1 = SeqPool(:, [1, 2]);
 Seq2 = SeqPool(:, [1, 3]);
-mypool = parpool(numel(ValAmps)*2);
+mypool = parpool(20);
 parfor runi = 1:20
     sessi = ceil(runi/10);
     if sessi == 1
