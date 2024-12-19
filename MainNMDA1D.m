@@ -36,10 +36,10 @@ mypool = parpool(20);
 parfor runi = 1:20
     sessi = ceil(runi/10);
     if sessi == 1
-        ProjectName = sprintf('Sync');
+        ProjectName = 'Sync';
         Seq = Seq1;
     elseif sessi == 2
-        ProjectName = sprintf('Async');
+        ProjectName = 'Async';
         Seq = Seq2;
     end
     plotdir = fullfile(Testdir, ProjectName);
@@ -48,7 +48,7 @@ parfor runi = 1:20
     end
    
     ValAmp = ValAmps(runi);
-    subplotdir = fullfile(plotdir, 'ValAmp%3.3',ValAmp);
+    subplotdir = fullfile(plotdir, 'ValAmp%f3.3', ValAmp);
     if ~exist(subplotdir,'dir')
         mkdir(subplotdir);
     end
