@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --partition=v100
-#SBATCH --job-name=Sync
+#SBATCH --job-name=ValAmps
 #SBATCH --mem=120G
 #SBATCH --time=7-00:00:00
 #SBATCH --tasks=1
