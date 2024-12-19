@@ -3,7 +3,7 @@ DefineIO1D;
 
 %% Build the neural network
 visualize = 1;
-Ntwk = NetworkgeneratorGPU1D(gnrloutdir, visualize, Mycolors);
+NetworkgeneratorGPU1D;
 close all;
 
 %% Define input sequences

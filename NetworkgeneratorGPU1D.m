@@ -1,4 +1,3 @@
-function Ntwk = NetworkgeneratorGPU1D(gnrloutdir, visualize, OKeeffe)
 Ntwkfile = fullfile(gnrloutdir, 'NtwkNMDA.mat');
 if ~exist(Ntwkfile, 'file')
     %% The structure of the network
@@ -147,7 +146,7 @@ if ~exist(Ntwkfile, 'file')
                 [Ntwk.Exct.Location(Ntwk.Smpl.E,2), Ntwk.Inhbt.Location(i,2)],...
                 '-', 'Color', 'g', 'LineWidth',1);
         end
-        %plot(Ntwk.Inhbt.Location(EIs,1), Ntwk.Inhbt.Location(EIs,2), '.', 'Color', OKeeffe(8,:), 'MarkerSize', Ntwk.Inhbt.Properties.size);
+        %plot(Ntwk.Inhbt.Location(EIs,1), Ntwk.Inhbt.Location(EIs,2), '.', 'Color', Mycolors(8,:), 'MarkerSize', Ntwk.Inhbt.Properties.size);
 
         IEs = find(Ntwk.Cnnct_IE(:, Ntwk.Smpl.I));
         for i = IEs'
@@ -155,7 +154,7 @@ if ~exist(Ntwkfile, 'file')
                 [Ntwk.Exct.Location(i,2), Ntwk.Inhbt.Location(Ntwk.Smpl.I,2)],...
                 '-', 'Color', 'r', 'LineWidth',1);
         end
-        % plot(Ntwk.Inhbt.Location(IEs,1), Ntwk.Inhbt.Location(IEs,2), '.', 'Color', OKeeffe(7,:), 'MarkerSize', Ntwk.Inhbt.Properties.size);
+        % plot(Ntwk.Inhbt.Location(IEs,1), Ntwk.Inhbt.Location(IEs,2), '.', 'Color', Mycolors(7,:), 'MarkerSize', Ntwk.Inhbt.Properties.size);
         legend([lgd1, lgd2], {'E to I','I to E'});
         mysavefig(h, filename, gnrloutdir, 14, [4, 2], 2);
         clear EIs IEs i;
@@ -255,10 +254,9 @@ if ~exist(Ntwkfile, 'file')
     Ntwk.wInput = gpuArray.rand(size(Ntwk.Cnnct_Input)).*Ntwk.Cnnct_Input;
     clear XInput YInput XE YE DstcInput p_Input;
     if visualize
-        InputTuning1D(Ntwk, OKeeffe, gnrloutdir);
+        InputTuning1D(Ntwk, Mycolors, gnrloutdir);
     end
     save(Ntwkfile, 'Ntwk');
 else
     load(Ntwkfile, 'Ntwk');
-end
 end
