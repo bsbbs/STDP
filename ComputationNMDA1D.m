@@ -7,7 +7,7 @@
 % plotdir = fullfile(Projdir, ProjectName);
 %% 
 evi = 18; % intersectional check based on training duration from 0 to 18 period.
-plotdirintersect = fullfile(plotdir, sprintf('Intersect%i', evi));
+plotdirintersect = fullfile(subplotdir, sprintf('Intersect%i', evi));
 if ~exist(plotdirintersect,'dir')
     mkdir(plotdirintersect);
     plotdirintersect_sim = fullfile(plotdirintersect, "SavedSimulations");
@@ -16,11 +16,11 @@ end
 %% load Ntwk file and trained weights
 Ntwkfile = fullfile(plotdir, 'Ntwk.mat');
 load(Ntwkfile);
-Rsltfile = fullfile(plotdir,'Rslts.mat');
+Rsltfile = fullfile(subplotdir,'Rslts.mat');
 load(Rsltfile);
 if evi >=1
     filename = sprintf('RealtimeMonitor_Event%i', evi);
-    load(fullfile(plotdir, [filename, '.mat']));
+    load(fullfile(subplotdir, [filename, '.mat']));
 else
     WEI = Ntwk.wEI_initial;
     WIE = Ntwk.wIE_initial;

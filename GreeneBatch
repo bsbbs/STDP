@@ -1,0 +1,18 @@
+#!/bin/bash
+#SBATCH --partition=v100
+#SBATCH --job-name=Sync
+#SBATCH --mem=120G
+#SBATCH --time=7-00:00:00
+#SBATCH --tasks=1
+#SBATCH --cpus-per-task=20
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:1
+#SBATCH --mail-type=END
+#SBATCH --mail-user=bs3667@nyu.edu
+cd ~/STDP
+module purge
+module load cuda/10.2.89
+module load matlab/2021b
+matlab -nodisplay -r MainNMDA1D
+

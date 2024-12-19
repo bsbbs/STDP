@@ -5,7 +5,7 @@ NetworkgeneratorPeriodicGPU1D;
 
 %% Specify project name and output
 
-Rsltfile = fullfile(plotdir,'Rslts.mat');
+Rsltfile = fullfile(subplotdir,'Rslts.mat');
 
 %% Build the Input structure
 InputSetup1D;
@@ -104,8 +104,8 @@ smpl = 0;
 for t = 1:(timesteps-1)
     % input spikes, Poission process
     InputSpikes = gpuArray.rand(Ntwk.Input.N,1);
-    InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < Ntwk.Input.spikeProbability*Seq(t,1);
-    InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < Ntwk.Input.spikeProbability*Seq(t,2);
+    InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < Ntwk.Input.spikeProbability*Seq(t,1)*ValAmp;
+    InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < Ntwk.Input.spikeProbability*Seq(t,2)*ValAmp;
     
     % Synaptic plasticity
     xEpre = xEpre -(xEpre/Ntwk.ExctSTDP.tau_prepost)*dt + Espikes';
@@ -209,7 +209,7 @@ for t = 1:(timesteps-1)
         % Prepare the video file
         profiles = VideoWriter.getProfiles();
         disp(profiles);
-        writerObj1 = VideoWriter(fullfile(plotdir, filename), 'Motion JPEG AVI');
+        writerObj1 = VideoWriter(fullfile(subplotdir, filename), 'Motion JPEG AVI');
         writerObj1.FrameRate = 100; % Adjust frame rate as needed
         writerObj1.Quality = 95;   % Set quality to maximum for best results (only for MPEG-4)
         open(writerObj1);
@@ -255,11 +255,11 @@ for t = 1:(timesteps-1)
         end
     end
     if any(t == smplonsets + 600/dt)
-        save(fullfile(plotdir, [filename, '.mat']), 'Smpl','timevec','WEE','WEI','WIE', '-v7.3');
+        save(fullfile(subplotdir, [filename, '.mat']), 'Smpl','timevec','WEE','WEI','WIE', '-v7.3');
         figure(h1);
         axis([time(smplonsets(evi))+[-100, 600] 0 Ntwk.Exct.N]);
-        mysavefig(h1, filename, plotdir, 12, [4, 4], 1);
-        savefig(h1, fullfile(plotdir,filename));
+        mysavefig(h1, filename, subplotdir, 12, [4, 4], 1);
+        savefig(h1, fullfile(subplotdir,filename));
         cla;
         figure(h2);
         cla;
@@ -286,7 +286,7 @@ c.Label.String = 'Weight change';
 c.Location = 'northoutside';
 xlabel("Exct neurons");
 ylabel("Inhbt neurons");
-mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
+mysavefig(h, filename, subplotdir, 12, [2.5, 2.81], 1);
 
 h = figure;
 filename = sprintf('WIE_change_%1.1fs', duration/1000);
@@ -297,7 +297,7 @@ c.Label.String = 'Weight change';
 c.Location = 'northoutside';
 xlabel("Inhbt neurons");
 ylabel("Exct neurons");
-mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
+mysavefig(h, filename, subplotdir, 12, [2.5, 2.81], 1);
 
 h = figure;
 filename = sprintf('WEE_change_%1.1fs', duration/1000);
@@ -308,10 +308,10 @@ c.Label.String = 'Weight change';
 c.Location = 'northoutside';
 xlabel("Exct neurons");
 ylabel("Exct neurons");
-mysavefig(h, filename, plotdir, 12, [2.5, 2.81], 1);
+mysavefig(h, filename, subplotdir, 12, [2.5, 2.81], 1);
 
 %% Overall tuning
-EvalTuning1D(Ntwk,WEE,WEI,WIE,OKeeffe,plotdir);
+EvalTuning1D(Ntwk,WEE,WEI,WIE,OKeeffe,subplotdir);
 %% Save results
 % close all;
 % clearvars -except 'Ntwk' 'Seq' 'Smpl' 'WEI' 'WIE' 'WEE' 'Rsltfile';
