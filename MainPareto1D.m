@@ -28,8 +28,8 @@ Covs = 0:.1:1;
 evs = [evspool(:,1) evspool(:,1)];
 Type = 'Pareto';
 Inputstruct = Ntwk.Input;
-mypool = parpool(10);
-parfor runi = 1:10
+mypool = parpool(11);
+parfor runi = 1:11
     % define values
     Cov = Covs(runi);
     Runningdir = fullfile(Testdir, sprintf('%s_Cov%1.1f', Type, Cov));
@@ -37,7 +37,7 @@ parfor runi = 1:10
         mkdir(Runningdir);
     end
     fprintf('%s, Val = %1.1f\n', Type, Cov);
-    valfile = fullfile(Runningdir, sprintf('Seq_%s_Val%1.1f_%itrials.mat', Type, Cov, Ntrial));
+    valfile = fullfile(Runningdir, sprintf('Seq_%s_Cov%1.1f_%itrials.mat', Type, Cov, Ntrial));
     values = ParetoSequence(Ntrial, Cov);
     Seq = struct('evs',evs,'values',values);
     s = struct("Seq", Seq);
@@ -53,7 +53,7 @@ parfor runi = 1:10
     Trainedfile = fullfile(Runningdir,'TrainedWeights.mat');
     RunnerNMDA1D(Ntwk, Seq, dt, Runningdir);
     % RunnerNMDA1D;
-    fprintf('%s, Val = %3.2f Done\n', Type, Val);
+    fprintf('%s, Cov = %1.1f Done\n', Type, Cov);
     s = struct("WEE", WEE, "WEI", WEI, "WIE", WIE);
     save(Trainedfile, '-fromstruct', s);
 end
