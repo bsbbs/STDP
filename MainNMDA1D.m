@@ -43,9 +43,9 @@ parfor runi = 1:(numel(ValAmps)*2)
         mkdir(subplotdir);
     end
     %% runner
-    RunnerNMDA1D;
+    [Ntwk, WEI, WIE, WEE] = RunnerNMDA1D(ValAmp, gnrloutdir, plotdir, subplotdir);
     %% Evaluation
-    ChecktheTestNMDA1D;
-    ComputationNMDA1D;
+    %ChecktheTestNMDA1D;
+    %ComputationNMDA1D;
 end
 

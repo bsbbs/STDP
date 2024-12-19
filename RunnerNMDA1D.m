@@ -1,4 +1,4 @@
-% Runner
+function [Ntwk, WEI, WIE, WEE] = RunnerNMDA1D(ValAmp, gnrloutdir, plotdir, subplotdir)% Runner
 %% Build the neural network
 show = 1;
 NetworkgeneratorPeriodicGPU1D;
@@ -106,7 +106,7 @@ for t = 1:(timesteps-1)
     InputSpikes = gpuArray.rand(Ntwk.Input.N,1);
     InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < Ntwk.Input.spikeProbability*Seq(t,1)*ValAmp;
     InputSpikes(Ntwk.Input.Origins == 2) = InputSpikes(Ntwk.Input.Origins == 2) < Ntwk.Input.spikeProbability*Seq(t,2)*ValAmp;
-    
+
     % Synaptic plasticity
     xEpre = xEpre -(xEpre/Ntwk.ExctSTDP.tau_prepost)*dt + Espikes';
     xEpost = xEpost -(xEpost/Ntwk.ExctSTDP.tau_postpre)*dt + Espikes;
@@ -164,14 +164,14 @@ for t = 1:(timesteps-1)
     % Updating OU noise
     ExctNoise = ExctNoise + ((Ib - ExctNoise)/Ntwk.Noise.tauN + gpuArray.randn(Ntwk.Exct.N,1)*Ntwk.Noise.sgm)*dt;
     InhbtNosie = InhbtNosie + ((Ib - InhbtNosie)/Ntwk.Noise.tauN + gpuArray.randn(Ntwk.Inhbt.N,1)*Ntwk.Noise.sgm)*dt;
-    
+
     % Membrane potential change for Exct neurons
     INMDA = ExctgNMDA./(1+exp(-Ntwk.Synapse.NMDA.a*ExctV/Ntwk.Synapse.NMDA.b)*Ntwk.Synapse.NMDA.Mg2).*(Ntwk.VE - ExctV);
     dV = (Ntwk.Exct.gL*(Ntwk.VL - ExctV) + ExctgAMPA.*(Ntwk.VE - ExctV) + INMDA + ExctgGABA.*(Ntwk.VI - ExctV) + ExctNoise)/Ntwk.Exct.Cm*dt;
     ExctV = ExctV + dV;
     ExctV(ExctRefraction>0) = Ntwk.Vreset;
     ExctRefraction = ExctRefraction - 1;
-    
+
     % Exct neurons fire
     Espikes = ExctV > Ntwk.Vth;
     if any(Espikes)
@@ -315,4 +315,4 @@ EvalTuning1D(Ntwk,WEE,WEI,WIE,OKeeffe,subplotdir);
 %% Save results
 % close all;
 % clearvars -except 'Ntwk' 'Seq' 'Smpl' 'WEI' 'WIE' 'WEE' 'Rsltfile';
-
+end
