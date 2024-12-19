@@ -22,7 +22,7 @@ parfor runi = 1:20
         mkdir(plotdir);
     end
     Seqfile = fullfile(plotdir, 'Seq.mat');
-    if ~exist(Seqfile, 'file')
+    %if ~exist(Seqfile, 'file')
         % sigma = 0;
         % values = ParetoSequence(Ntrial, sigma);
         values = ones(Ntrial,2);
@@ -32,11 +32,11 @@ parfor runi = 1:20
         duration = length(Seq)*dt; % ms
         time = [dt:dt:duration]';
         timesteps = numel(time);
-        save(Seqfile, 'Seq','evs','values','time','duration','timesteps');
-    else
-        load(Seqfile);
-    end
-    duration = length(Seq)*dt; % ms
+        %save(Seqfile, 'Seq','evs','values','time','duration','timesteps');
+   %else
+        %load(Seqfile);
+    %end
+    % duration = length(Seq)*dt; % ms
     ValAmp = ValAmps(runi);
     subplotdir = fullfile(plotdir, 'ValAmp%3.3',ValAmp);
     if ~exist(subplotdir,'dir')
