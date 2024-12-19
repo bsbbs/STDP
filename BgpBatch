@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH --partition=v100
-#SBATCH --job-name=Sync_LwIn
-#SBATCH --mem=60G
-#SBATCH --time=7-00:00:00
+#SBATCH --partition=gpu4_long
+#SBATCH --job-name=ValAmps
+#SBATCH --mem=120G
+#SBATCH --time=28-00:00:00
 #SBATCH --tasks=1
-#SBATCH --cpus-per-task=10
+#SBATCH --cpus-per-task=14
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1
@@ -12,7 +12,7 @@
 #SBATCH --mail-user=bs3667@nyu.edu
 cd ~/STDP
 module purge
-module load cuda/10.2.89
+module load cuda/11.8
 module load matlab/2021b
-matlab -nodisplay -r MainSyncNMDA1D_LowInpt
+matlab -nodisplay -r MainNMDA1D
 
