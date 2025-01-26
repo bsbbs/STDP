@@ -1,11 +1,17 @@
-% Seqfile = fullfile(plotdir, 'Seq.mat');
-% load(Seqfile);
-% Ntwkfile = fullfile(plotdir, 'Ntwk.mat');
-% load(Ntwkfile);
-% Rsltfile = fullfile(subplotdir,'Rslts.mat');
-% load(Rsltfile);
+Projdir = 'C:\Users\Bo\NYU Langone Health Dropbox\Shen Bo\Bo Shen Working files\STDP_Project\Analyses';
+gnrloutdir = fullfile(Projdir, 'General1DSmallerPatch');
+OKeeffe = ColorPalette(gnrloutdir);
+plotdir = fullfile(Projdir, 'SyncSmallerPatch_dt0.1');
+Seqfile = fullfile(plotdir, 'Seq.mat');
+load(Seqfile);
+Ntwkfile = fullfile(plotdir, 'Ntwk.mat');
+load(Ntwkfile);
+Rsltfile = fullfile(plotdir,'Rslts.mat');
+load(Rsltfile);
+
 %% visualizing dynamically changing periods
-smplonsets = round(evs(round(linspace(1,numel(evs(:,1)),30)),1)*1000/dt);
+dt = .1;
+smplonsets = round(evs(round(linspace(1,numel(evs(:,1)),18)),1)*1000/dt);
 EIMtrx = nan(numel(smplonsets)+1, Ntwk.Input.Source);
 IEMtrx = nan(numel(smplonsets)+1,  Ntwk.Input.Source);
 RIMtrx = nan(numel(smplonsets)+1, Ntwk.Input.Source, Ntwk.Input.Source);
@@ -16,7 +22,7 @@ for evi = 0:numel(smplonsets)
         WEE = Ntwk.wEE_initial;
     else
         filename = sprintf('RealtimeMonitor_Event%i', evi);
-        load(fullfile(subplotdir, [filename, '.mat']));
+        load(fullfile(plotdir, [filename, '.mat']));
     end
     InputtoI = WEI*Ntwk.Cnnct_Input;
     ItoInput = Ntwk.Cnnct_Input'*WIE;
@@ -42,7 +48,7 @@ end
 legend({'E to I from Input 1','E to I from Input 2'}, 'Location','best');
 xlabel('Check time point');
 ylabel('Summed weights');
-mysavefig(h, filename, subplotdir, 12, [5, 5], 1);
+mysavefig(h, filename, plotdir, 12, [5, 5], 1);
 subplot(2,2,2); hold on;
 for i = 1:2
     plot(0:18,IEMtrx(:,i), 'Color',OKeeffe(i,:));
@@ -50,7 +56,7 @@ end
 legend({'I to E to Input 1','I to E to Input 2'}, 'Location','best');
 xlabel('Check time point');
 ylabel('Summed weights');
-mysavefig(h, filename, subplotdir, 12, [5, 5], 1);
+mysavefig(h, filename, plotdir, 12, [5, 5], 1);
 subplot(2,2,3); hold on;
 for i = 1:2
     plot(0:18,RIMtrx(:,i,1), 'Color',OKeeffe(i,:));
@@ -58,7 +64,7 @@ end
 legend({'Input 1 to Input 1','Input 1 to Input 2'}, 'Location','best');
 xlabel('Check time point');
 ylabel('Summed weights');
-mysavefig(h, filename, subplotdir, 12, [5, 5], 1);
+mysavefig(h, filename, plotdir, 12, [5, 5], 1);
 subplot(2,2,4); hold on;
 for i = 1:2
     plot(0:18,RIMtrx(:,i,2), 'Color',OKeeffe(i,:));
@@ -66,7 +72,7 @@ end
 legend({'Input 2 to Input 1','Input 2 to Input 2'}, 'Location','best');
 xlabel('Check time point');
 ylabel('Summed weights');
-mysavefig(h, filename, subplotdir, 12, [5, 5], 1);
+mysavefig(h, filename, plotdir, 12, [5, 5], 1);
 %%
 for evi = 1:numel(smplonsets)
     filename = sprintf('RealtimeMonitor_Event%i', evi);
