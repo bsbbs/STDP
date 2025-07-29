@@ -130,7 +130,7 @@ ylabel('Effective weights');
 title('E to I');
 % autoy = ylim();
 % ylim([autoy(1)-0.1*(range(autoy)),autoy(2)]);
-ylim([0, .04]);
+% ylim([0, .04]);
 tmp = flip(lgd, 1);
 legend(tmp(:), legendLabels, 'Location', 'best', 'NumColumns',2);
 mysavefig(h, filename, plotdir, 12, [2.5, 5], 2);
@@ -161,7 +161,7 @@ ylabel('Effective weights');
 title('I to E');
 % autoy = ylim();
 % ylim([autoy(1)-0.1*(range(autoy)),autoy(2)]);
-ylim([0, .04]);
+% ylim([0, .04]);
 mysavefig(h, filename, plotdir, 12, [2.5, 5], 2);
 % E to E connections
 subplot(3,1,3); hold on;
@@ -203,20 +203,21 @@ InputtoI = WEI*TuneMasks./sum(TuneMasks, 1); % from
 ItoInput = TuneMasks'*WIE./sum(TuneMasks, 1)'; % to
 RecurrentInhbt2 = ItoInput*InputtoI;
 yl = max([RecurrentInhbt2(:); RecurrentInhbt1(:)])*1.2;
+
 h = figure;
 filename = 'FeedbackInhibition';
+subplot(1,2,2);
+b2 = bar(RecurrentInhbt2,'FaceColor','flat');
+aftery = ylim;
+xlabel('Input origin');
+ylabel('Excitation x Gain control');
+mysavefig(h, filename, plotdir, 12, [2.5*2, 2.2161], 2);
 subplot(1,2,1);
 b1 = bar(RecurrentInhbt1,'FaceColor','flat');
-ylim([0, .16]);
+ylim(aftery);
 xlabel('Input origin');
 ylabel('Excitation x Gain control');
 ld = legend({'to 1','to 2'}, "Location","best");
-mysavefig(h, filename, plotdir, 12, [2.5*2, 2.2161], 2);
-subplot(1,2,2);
-b2 = bar(RecurrentInhbt2,'FaceColor','flat');
-ylim([0, .16]);
-xlabel('Input origin');
-ylabel('Excitation x Gain control');
 mysavefig(h, filename, plotdir, 12, [2.5*2, 2.2161], 2);
 
 

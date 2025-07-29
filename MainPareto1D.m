@@ -57,3 +57,14 @@ parfor runi = 1:11
     s = struct("WEE", WEE, "WEI", WEI, "WIE", WIE);
     save(Trainedfile, '-fromstruct', s);
 end
+
+%% Test the strucutre of the established network
+Covs = 0:.1:1;
+evs = [evspool(:,1) evspool(:,1)];
+Type = 'Pareto';
+for runi = 1:11
+    % define values
+    Cov = Covs(runi);
+    Runningdir = fullfile(Testdir, sprintf('%s_Cov%1.1f', Type, Cov));
+    ChecktheTestNMDA1D;
+end
