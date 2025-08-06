@@ -23,4 +23,4 @@ else
     warning("Implementing this code requires GPU");
 end
 % loading color palette
-Mycolors = ColorPalette(gnrloutdir);
+ColorPalette;

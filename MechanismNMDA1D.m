@@ -8,45 +8,59 @@ TuneMask1 = Cnnct1 & ~Cnnct2;
 TuneMask2 = ~Cnnct1 & Cnnct2;
 TuneMask = Cnnct > 3;
 TuneMaskInhbt = InhbtCnnct > 200;
-%% define the input values and sequence for testing purpose only
-% Seqfile = fullfile(plotdir, 'SeqTest.mat');
-% TestN = 16;
-% if ~exist(Seqfile, 'file')
-%     sgm = 0;
-%     values = ParetoSequence(TestN, sgm);
-%     [Seq, evs] = Generator(TestN, values, dt);
-%     Seq = Seq(:, 1:2);
-%     % Time vector
-%     duration = length(Seq)*dt; % ms
-%     time = [dt:dt:duration]';
-%     timesteps = numel(time);
-%     save(Seqfile, 'Seq','evs','values','time','duration','timesteps');
-% else
-%     load(Seqfile);
-% end
-% h = figure;
-% filename = 'TestInputDynamic';
-% hold on;
-% for ii = 2:-1:1
-%     plot(time/1000, Seq(:,ii)*.9+(ii), '-', 'LineWidth', 1);
-% end
-% title('Input signal');
-% xlabel('Time (s)');
-% ylabel('Channel');
-% axis([0, time(end)/1000, .5, 2*1.45]); % Adjust the axis for better visualization
-% yticks([1:2]);
-% mysavefig(h, filename, plotdir, 12, [4,2], .1);
+%% Examine inputs weights
+% neurons only receiving Input 1
+sum(sum(Ntwk.wInput(TuneMask1,Ntwk.Input.Origins==2)))
+h = figure;
+imagesc(Ntwk.wInput);
 
+tmp = Ntwk.wInput(TuneMask2, Ntwk.Input.Origins == 2); % E neuron receiving input from 2
+% weight mediated from EE connection
+tmp2 = WEE(TuneMask1, TuneMask2); % neurons only tuned directly to 1
+Mediate2 = tmp2*tmp;
+h = figure;
+filename = 'CheckInputMediation';
+subplot(2,2,1);
+Input2i = find(Ntwk.Input.Origins==2);
+Elocs = Ntwk.Exct.Location(TuneMask1,1);
+imagesc(Input2i, Elocs, Mediate2);
+set(gca, 'YDir','normal');
+ylabel('xE1 (\mum)');
+xlabel('# Input 2 neurons');
+title('Exct on E1 mediating thru E2');
+colorbar;
+subplot(2,2,2);
+bh=barh(Elocs,sum(Mediate2,2));
+bh.EdgeColor = [0,0,0];
+ylabel('xE1 (\mum)');
+xlabel('Summed mediation weights');
+title('Exct on E1 mediating thru E2');
+Direct1 = Ntwk.wInput(TuneMask1, Ntwk.Input.Origins == 1); % E neuron receiving input from 1
+subplot(2,2,3);
+Input1i = find(Ntwk.Input.Origins==1);
+imagesc(Input1i, Elocs, Direct1);
+set(gca, 'YDir','normal');
+xlabel('# Input 1 neurons');
+ylabel('xE1 (\mum)');
+title('Exct directly received from Input1');
+colorbar;
+subplot(2,2,4);
+bh=barh(Elocs, sum(Direct1,2));
+bh.EdgeColor = [0,0,0];
+ylabel('xE1 (\mum)');
+xlabel('Summed direct weights');
+title('Exct directly received from Input1');
+savefig(h, fullfile(sim_dir,[filename, '.fig']));
+%% probe the network
 duration = 1600; % ms
 time = [dt:dt:duration]';
 timesteps = numel(time);
 refractionPeriod_E = Ntwk.Exct.tauREF/dt;
 refractionPeriod_I = Ntwk.Inhbt.tauREF/dt;
 spikeProbability = Ntwk.Input.spikeRate * dt;
-% test the network
-%V1vec = [.1, .5, 1, 2, 5, 10, 50];
-V1vec = [.1, 1, 5, 50];
-V2vec = flip(1./linspace(1/50,1,16)-1);
+% test the networks
+V1vec = 1;
+V2vec = flip(1./linspace(1/max([1,V1*5]+1),1,8)-1);
 simfile = fullfile(sim_dir, 'ModulationEffect.mat');
 if ~exist(simfile,'file')
     Modulation = nan(numel(V1vec),numel(V2vec), 2);
@@ -105,7 +119,8 @@ if ~exist(simfile,'file')
                 MeanFR = [];
                 MeanFREI = [];
                 timevec = [];
-                for t = 1:(timesteps-1)
+                Espiketrace = nan(Ntwk.Exct.N,timesteps);
+                for t = 1:timesteps
                     % input spikes
                     InputSpikes = gpuArray.rand(Ntwk.Input.N,1);
                     % InputSpikes(Ntwk.Input.Origins == 1) = InputSpikes(Ntwk.Input.Origins == 1) < spikeProbability*Seq(t,1);
@@ -197,7 +212,8 @@ if ~exist(simfile,'file')
                     end
                     InhbtV(Ispikes) = Ntwk.Vfire;
                     InhbtRefraction(Ispikes) = refractionPeriod_I;
-
+                    
+                    Espiketrace(:,t) = Espikes;
                     plot(t*dt*ones(sum(Espikes),1), Ntwk.Exct.Location(Espikes,1), 'k.', 'MarkerSize', 2);
                     plot(t*dt*ones(sum(Ispikes),1), Ntwk.Inhbt.Location(Ispikes,1), 'r.', 'MarkerSize', 3);
                     % plot(time(t)*ones(sum(Ispikes),1), InhbtVec(Ispikes), 'r.', 'MarkerSize', 3);
@@ -227,7 +243,7 @@ if ~exist(simfile,'file')
                 ylabel('Firing rate (Hz)');
                 mysavefig(h, filename, sim_dir, 12, [4, 2], 1);
                 close(h);
-                s = struct('timevec',timevec, "MeanFR", MeanFR, "MeanFREI", MeanFREI, 'FR', FR, 'timep', timep);
+                s = struct('timevec',timevec, "Espiketrace", Espiketrace, "MeanFR", MeanFR, "MeanFREI", MeanFREI, 'FR', FR, 'timep', timep);
                 save(fullfile(sim_dir, [filename, '.mat']), "-fromstruct", s);
             else
                 s = load(fullfile(sim_dir, [filename, '.mat']));
@@ -239,7 +255,75 @@ if ~exist(simfile,'file')
 else
     load(simfile);
 end
-%%
+%% Lateral inhibition on each single neuronal level
+meanFRv2 = nan(numel(V2vec), sum(TuneMask1));
+for v2i = 1:numel(V2vec)
+    V2 = V2vec(v2i);
+    filename = sprintf('MeanFRDynmc_V1_%1.1fV2_%1.2f', V1, V2);
+    if exist(fullfile(sim_dir, [filename, '.mat']), 'file')
+        load(fullfile(sim_dir, [filename, '.mat']));
+        h = figure;
+        imagesc(timevec, Ntwk.Exct.Location(:,1), Espiketrace');
+        [FR, timep] = PSTH(Espiketrace(TuneMask1,:)', dt);
+        h = ChannelPlot(timep, FR, Ntwk.Exct.Location(TuneMask1,1));
+        meanFR = sum(Espiketrace(TuneMask1,timevec>600 & timevec<1600),2);
+        meanFRv2(v2i,:) = meanFR;
+        h = figure;
+        plot(Ntwk.Exct.Location(TuneMask1,1), meanFR, 'k.');
+        xlabel('x location (\mum)');
+        ylabel('Firing rates (Hz)');
+    else
+        error('no file found');
+    end
+end
+
+% Mean firing rates
+h = figure;
+plot(V2vec', meanFRv2,'.-');
+% Mean firing rates over x-loc
+Elocs = Ntwk.Exct.Location(TuneMask1,1);
+% running mean
+Nbins = 30;
+Mvwndw = ((max(Elocs)-min(Elocs))/Nbins);
+xbins = (min(Elocs)+Mvwndw/2):Mvwndw:(max(Elocs)-Mvwndw/2);
+steps = numel(xbins);
+runmeanFRv2 = nan(numel(V2vec),steps);
+for i = 1:steps
+    runmeanFRv2(:,i) = mean(meanFRv2(:,Elocs>=xbins(i)-Mvwndw/2 & Elocs<=xbins(i)+Mvwndw/2),2);
+end
+
+mygrays = gray(numel(V2vec)+1);
+h = figure;
+filename = "LateralTuningE1overxlocs";
+subplot(2,1,1);
+hold on;
+for vi = 1:numel(V2vec)
+    plot(xbins, runmeanFRv2(vi,:)','.-', 'Color',mygrays(vi,:));
+end
+legend({'V2=0','V2=.14','V2=.31','V2=.56','V2=.91','V2=1.47','V2=2.5','V2=5.0'});
+ylim(ylim()+[-1,0]);
+ylabel('Firing rates (Hz)');
+xlabel('x (\mum)');
+subplot(2,1,2);
+plot(V2vec, runmeanFRv2,'.-');
+text(1.5,10,"Color is x locations in 30 bins");
+ylim(ylim()+[-1,0]);
+xlim(xlim()+[-.1,.1]);
+ylabel('Firing rates (Hz)');
+xlabel('V2');
+savefig(h, fullfile(sim_dir,[filename, '.fig']));
+
+% Input matrix
+h = figure;
+subplot(2,1,1);
+imagesc(Ntwk.wInput);
+colorbar;
+subplot(2,1,2);
+imagesc(Ntwk.Cnnct_Input);
+colorbar;
+
+
+%% Overall effects
 h = figure;
 filename = 'ModulationEffect';
 mygray = flip(gray(numel(V1vec)+1));

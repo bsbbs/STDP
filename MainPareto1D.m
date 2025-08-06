@@ -68,3 +68,6 @@ for runi = 1:11
     Runningdir = fullfile(Testdir, sprintf('%s_Cov%1.1f', Type, Cov));
     ChecktheTestNMDA1D;
 end
+
+
+

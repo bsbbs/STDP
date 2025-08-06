@@ -1,5 +1,5 @@
 function [FR, timep] = PSTH(SpikeTrace, dt)
-Mvwndw = 50; % ms
+Mvwndw = 100; % ms
 timesteps = size(SpikeTrace, 1);
 Stepswndw = Mvwndw/dt;
 Mvsteps = floor(timesteps/Stepswndw);

@@ -67,3 +67,35 @@ parfor runi = 1:14
     s = struct("WEE", WEE, "WEI", WEI, "WIE", WIE);
     save(Trainedfile, '-fromstruct', s);
 end
+
+
+%% Probe the compuational function of the network
+% Vals = [.1, .5, 1, 2, 5, 10, 50];
+Vals = [.1, 1, 5, 50];
+Types = {'Sync','Async'};
+for si = 1%:2
+    for vi = 1:numel(Vals)
+        Runningdir = fullfile(Testdir, sprintf('%s_Val%2.1f', Types{si}, Vals(vi)));
+        fprintf('%s, Val = %2.1f\n', Types{si}, Vals(vi));
+        fl = dir(fullfile(Runningdir, 'Weights_Seg*.mat'));
+        numeric_parts_str = regexp({fl.name}, '\d+', 'match', 'once');
+        file_numbers = str2double(numeric_parts_str);
+        [~, max_index] = max(file_numbers);
+        testf = fl(max_index);
+        load(fullfile(testf.folder,testf.name));
+        sim_dir = fullfile(Runningdir, sprintf('Test_Seg%i', max(file_numbers)));
+        mkdir(sim_dir);
+        ComputationNMDA1D;
+    end
+end
+
+%% Explore possible mechanisms
+Runningdir = fullfile(Testdir, 'Sync_Val1.0');
+fl = dir(fullfile(Runningdir, 'Weights_Seg*.mat'));
+numeric_parts_str = regexp({fl.name}, '\d+', 'match', 'once');
+file_numbers = str2double(numeric_parts_str);
+[~, max_index] = max(file_numbers);
+testf = fl(max_index);
+load(fullfile(testf.folder,testf.name));
+sim_dir = fullfile(Runningdir, sprintf('Mechanism_Seg%i', max(file_numbers)));
+mkdir(sim_dir);

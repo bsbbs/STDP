@@ -1,4 +1,4 @@
-function Mycolors = ColorPalette(gnrloutdir)
+% function Mycolors = ColorPalette(gnrloutdir)
 %% setup
 pastelPalette = [ ...
     0.8941, 0.4471, 0.2471;  % Pastel Red
