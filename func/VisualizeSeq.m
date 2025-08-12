@@ -29,10 +29,14 @@ mysavefig(h, filename, plotdir, 12, [3,6], 1);
 % The probability of a spike in each time bin
 spikeProbability = Inputstruct.spikeRate * dt;
 % Poisson generator: generate random numbers and compare to spike probability
-leftt = floor(min(find(Sgnls(:,1)>0, 1 ), find(Sgnls(:,2)>0, 1 )*dt)/100)*100;
+leftt = floor(min(find(Sgnls(:,1)>0, 1 ), find(Sgnls(:,2)>0, 1 ))*dt/100)*100;
 rightt = ceil((max(find(Sgnls(:,1)>0, 1 ), find(Sgnls(:,2)>0, 1 ))*dt+500)/100)*100;
 tmpsteps = (rightt - leftt)/dt;
-InputSpikes = gpuArray.rand(tmpsteps, Inputstruct.N);
+if gpuDeviceCount > 0
+    InputSpikes = gpuArray.rand(tmpsteps, Inputstruct.N);
+else
+    InputSpikes = rand(tmpsteps, Inputstruct.N);
+end
 trunck = 50000;
 for i = 1:ceil(tmpsteps/trunck)
     timevec = 1+(i-1)*trunck:min(i*trunck, tmpsteps);
@@ -42,7 +46,8 @@ end
 % Plot the raster plot
 subplot(3,1,2);
 hold on;
-for n = 1:5:Inputstruct.N
+smpl = min(Inputstruct.N-1,5);
+for n = 1:smpl:Inputstruct.N
     % Find indices where spikes occur
     spikeIndices = find(InputSpikes(:, n));
     % Convert indices to time
